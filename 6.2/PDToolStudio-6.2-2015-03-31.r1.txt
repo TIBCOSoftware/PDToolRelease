@@ -21,7 +21,9 @@ Release Notes (newest first):
 ======================
 Release 2015-03-31:
 ======================
-1) No changes for PDToolStudio.
+1) VCSModule (cgoodric)
+	a) Added support for VCS integration with Github.  Supported: Check-in, Check-out.
+	b) Not Supported: Forced Check-in is not supported at this time.
 
 ======================
 Release 2014-12-15:
