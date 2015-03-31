@@ -65,7 +65,11 @@ Release 2015-03-31:
 	    therefore making the code generic.  Adaptation to a CIS version is accomplished through XSLT mappings which map the request and response documents
 	    between CIS and PDTool Module XML.
 
-9) execCisDeployTool (mtinius)
+9) VCSModule (cgoodric)
+	a) Added support for VCS integration with Github.  Supported: Check-in, Check-out.
+	b) Not Supported: Forced Check-in is not supported at this time.
+	
+10) execCisDeployTool (mtinius)
 	a) Provided the ability to use variables for param1 and param2
 		# Param1=[PASS or FAIL]  :: Expected Regression Behavior.  Informs the script whether you expect the action to pass or fail.  Can be used for regression testing.
 		# Param2=[TRUE or FALSE] :: Exit Orchestration script on error
