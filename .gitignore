@@ -11,3 +11,5 @@
 # local settings #
 .DS_Store
 user.properties
+/bin
+/src
