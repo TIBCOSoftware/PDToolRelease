@@ -21,17 +21,28 @@ Release Notes (newest first):
 ==================================
 
 =========================
-Release Date: 2016-05-02
+Release Date: 2016-05-16
 =========================
 1) \bin Batch files: (mtinius)
-	a) Windows: ExecutePDTool.bat - Added a new feature to allow ExecutePDTool.bat to return to the "PWD" previous working directory when PWD is set by an invoking batch file.
-		If the batch file completes successfully, exits due to an error, or exits dues to invalid usage, it will execute "if defined PWD cd %PWD%
-	b) Windows: startEnvCMD.bat - Added a new batch file that will create a new windows shell with PDTOOL_HOME and PATH=%PDTOOL_HOME%\bin;%PATH% set.
-		The default color scheme:  background=blue, foreground=white.  The invoker has the ability to change the color scheme.
-	c) Windows: encrypt.bat - Added a new batch file that can be executed from any directory to encrypt a PDTool file. 
-		Requires executing "startEnvCMD.bat" first.
-	d) Windows: The encrypt file provides a pattern that customers can copy to build their own customized batch files which can be executed from any directory
-		as long as startEnvCMD.bat is executed first.	
+	a) Windows: 
+		ExecutePDToolReleaase.bat - NEW script used to integrate with homegrown or 3rd part continuous integration or deployment tools.
+		ExecutePDTool.bat - Added a new feature to allow ExecutePDTool.bat to return to the "PWD" previous working directory when PWD is set by an invoking batch file.
+							If the batch file completes successfully, exits due to an error, or exits dues to invalid usage, it will execute "if defined PWD cd %PWD%
+		envStart.cmd 	- Added a new batch file that will create a new windows shell with PDTOOL_HOME, VCS_HOME, PDTOOL_BIN and PATH=%PDTOOL_BIN%;%VCS_HOME%;%PATH% set.
+							The default color scheme:  background=blue, foreground=white.  The invoker has the ability to change the color scheme.
+		The following command batch files require executing "envStart.cmd" first:
+			env.cmd			- Set the environment variables for envStart.cmd. 
+								Sets the PATH to %PDTOOL_HOME%\bin;%PDTOOL_HOME%\envBin to allow execution of the new command line scripts from any directory.
+								Has the ability to invoke envCustom.cmd if it exists to set custom variables.
+			encrypt.cmd 	- Encrypt a PDTool file.  It can be executed from any directory.  
+			envConfig.cmd 	- Translate a short name environment type such as DEV,UAT,PROD into the -config parameter such as -config deploy_UAT1.properties
+			envExec.cmd		- Run the -exec command for a .dp file from any directory such as the /plans directory.  Will auto-reference the /plans directory if run from /bin.
+			envAnt.cmd		- Run the -ant command for a .xml file from any directory such as the /ant directory.  Will auto-reference the /ant directory if run from /bin.
+			cdant.cmd		- Change directory to the /resource/ant
+			cdbin.cmd		- Change directory to the /bin
+			cdconfig.cmd	- Change directory to the /resource/config
+			cdmodules.cmd	- Change directory to the /resource/modules
+			cdplans.cmd		- Change directory to the /resource/plans
 	
 2) VCS Module (mtinius)
 	a) Added a new feature to allow "SVN" only the ability to allow the revision argument to be one of:
@@ -59,8 +70,14 @@ Release Date: 2016-05-02
 				giving them the ability to turn on and off applying resource ownership.  For example, the deployment admin may want to run
 				the privileges against UAT and PROD and apply resource ownership but not apply it when run against DEV to reset privileges.			
 			/resources/modules/PrivilegeModule.xml shows an example of the XML change.
+
+4) Datasource Module (mtinius)
+	a) Added the ability through updateDataSources to update a data source's keystore settings which are found on the Advanced tab in Studio.
+		This capability is similar to Studio, albeit automated, which allows a user to place a .jks or .pfx file in the file system
+		and automatically import it into a target data source.  The DatasourceModule.xml provides the deployer with a configuration for
+		the certificate keystore file path, keystore type and keystore password.
 			
-4) PDToolModules.xsd (mtinius)
+5) PDToolModules.xsd (mtinius)
 	a) Schema change to support PrivilegeModule changes.
 			<ns2:PrivilegeModule xmlns:ns2="http://www.dvbu.cisco.com/ps/deploytool/modules">
 				<resourcePrivilege>
@@ -81,6 +98,25 @@ Release Date: 2016-05-02
 				   </privilege>
 				</resourcePrivilege>
 			</ns2:PrivilegeModule>
+			
+	b) Schema change to support DatasourceModule changes
+			<p1:DatasourceModule xmlns:p1="http://www.dvbu.cisco.com/ps/deploytool/modules">
+			  <datasource>
+			    <genericDataSource>
+			      <id>ds11</id>
+			      <resourcePath>/shared/test00/DataSources/testWebService</resourcePath>
+			      <!--Element keystore is optional-->
+		new-->	|-<keystore>
+				|   <!--Element keystoreAttributes is optional, maxOccurs=unbounded-->
+				|   <keystoreAttributes>
+				|     <keystoreFilePath>$PROJECT_HOME_PHYSICAL/resources/modules/cis_datasource_keystore.jks</keystoreFilePath>
+				|     <keystoreType>jks</keystoreType>
+				|     <keystorePassword>password</keystorePassword>
+				|   </keystoreAttributes>
+				|- </keystore>
+			    </genericDataSource>
+			  </datasource>
+			</p1:DatasourceModule>
 
 =========================
 Release Date: 2016-02-10

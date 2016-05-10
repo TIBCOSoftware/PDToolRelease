@@ -21,17 +21,17 @@ Release Notes (newest first):
 ==================================
 
 =========================
-Release Date: 2016-05-02
+Release Date: 2016-05-16
 =========================
 1) \bin Batch files: (mtinius)
 	a) Windows: ExecutePDToolStudio.bat - Added a new feature to allow ExecutePDToolStudio.bat to return to the "PWD" previous working directory when PWD is set by an invoking batch file.
 		If the batch file completes successfully, exits due to an error, or exits dues to invalid usage, it will execute "if defined PWD cd %PWD%
-	b) Windows: startEnvCMD.bat - Added a new batch file that will create a new windows shell with PDTOOL_HOME and PATH=%PDTOOL_HOME%\bin;%PATH% set.
+	b) Windows: \envBin\envStart.cmd - Added a new batch file that will create a new windows shell with PDTOOL_HOME, VCS_HOME, PDTOOL_BIN and PATH=%PDTOOL_BIN%;%VCS_HOME%;%PATH% set.
 		The default color scheme:  background=blue, foreground=white.  The invoker has the ability to change the color scheme.
-	c) Windows: encrypt.bat - Added a new batch file that can be executed from any directory to encrypt a PDToolStudio file. 
-		Requires executing "startEnvCMD.bat" first.
+	c) Windows: encrypt.bat - Added a new batch file that can be executed from any directory to encrypt a PDTool file. 
+		Requires executing "envStart.cmd" first.
 	d) Windows: The encrypt file provides a pattern that customers can copy to build their own customized batch files which can be executed from any directory
-		as long as startEnvCMD.bat is executed first.	
+		as long as envStart.cmd is executed first.	
 
 =========================
 Release Date: 2016-02-10
