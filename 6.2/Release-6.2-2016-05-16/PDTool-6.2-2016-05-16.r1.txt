@@ -52,7 +52,13 @@ Release Date: 2016-05-16
 		'COMMITTED'  last commit at or before BASE
 		'PREV'       revision just before COMMITTED
 		/resources/modules/VCSModule.xml shows an example of the use of BASE 
-		
+	b) VCS Initialize
+		Explicitly remove the workspace directory only and not the workspace name folder which is higher up in the directory path
+			modified the OLD: removeDirectory(prefix, vcsStruct.getVcsWorkspace());
+			     to include the project root which pinpoints the removal down to the actual workspace directory 
+				 and not the parent folders which may contain configuration folders for plans and modules.
+			NEW: removeDirectory(prefix, (vcsStruct.getVcsWorkspace()+"/"+vcsStruct.getVcsProjectRoot()).replaceAll("//", "/"));
+	
 3) Privilege Module (mtinius)
 	a) Added a new feature to allow changing ownership on a resource at the same time as setting the privileges.
 		The PDToolModules.xsd was modified to add new XML nodes.
