@@ -25,9 +25,12 @@ Release Date: 2016-05-16
 =========================
 1) \bin Batch files: (mtinius)
 	a) Windows: 
+		Installer - SetupPDTool.bat - Fixed issue with target paths containing () such as C:\Program Files (x86)\Java\jre7
 		ExecutePDToolReleaase.bat - NEW script used to integrate with homegrown or 3rd part continuous integration or deployment tools.
-		ExecutePDTool.bat - Added a new feature to allow ExecutePDTool.bat to return to the "PWD" previous working directory when PWD is set by an invoking batch file.
-							If the batch file completes successfully, exits due to an error, or exits dues to invalid usage, it will execute "if defined PWD cd %PWD%
+		ExecutePDTool.bat 
+			Added a new feature to allow ExecutePDTool.bat to return to the "PWD" previous working directory when PWD is set by an invoking batch file.
+				If the batch file completes successfully, exits due to an error, or exits dues to invalid usage, it will execute "if defined PWD cd %PWD%
+			Fixed issue with paths containing () such as C:\Program Files (x86)\Java\jre7
 		envStart.cmd 	- Added a new batch file that will create a new windows shell with PDTOOL_HOME, VCS_HOME, PDTOOL_BIN and PATH=%PDTOOL_BIN%;%VCS_HOME%;%PATH% set.
 							The default color scheme:  background=blue, foreground=white.  The invoker has the ability to change the color scheme.
 		The following command batch files require executing "envStart.cmd" first:
