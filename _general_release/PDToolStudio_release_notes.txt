@@ -1,8 +1,23 @@
-(c) 2016 Cisco and/or its affiliates. All rights reserved.
+# (c) 2017 TIBCO Software Inc. All rights reserved.
+# 
+# Except as specified below, this software is licensed pursuant to the Eclipse Public License v. 1.0.
+# The details can be found in the file LICENSE.
+# 
+# The following proprietary files are included as a convenience, and may not be used except pursuant
+# to valid license to Composite Information Server or TIBCO® Data Virtualization Server:
+# csadmin-XXXX.jar, csarchive-XXXX.jar, csbase-XXXX.jar, csclient-XXXX.jar, cscommon-XXXX.jar,
+# csext-XXXX.jar, csjdbc-XXXX.jar, csserverutil-XXXX.jar, csserver-XXXX.jar, cswebapi-XXXX.jar,
+# and customproc-XXXX.jar (where -XXXX is an optional version number).  Any included third party files
+# are licensed under the terms contained in their own accompanying LICENSE files, generally named .LICENSE.txt.
+# 
+# This software is licensed AS-IS. Support for this software is not covered by standard maintenance agreements with TIBCO.
+# If you would like to obtain assistance with this software, such assistance may be obtained through a separate paid consulting
+# agreement with TIBCO.
+
 ==================================
 PDToolStudio 6.2/7.0 Release notes:
 ==================================
-Section 1: Minimum Recommend CIS Versions
+Section 1: Minimum Recommend DV Versions
 Section 2: Release notes (newest first)
 Section 3: To Upgrade an existing install
 
@@ -19,6 +34,17 @@ CIS 6.2:  Hotfix  6.2.5.00.24 or higher for pkg_import -nosourceinfo to work pro
 Section 2:
 Release Notes (newest first):
 ==================================
+
+=========================
+Release Date: 2017-12-22
+=========================
+1) Transitioned all modules and documentation to TIBCO(R) Software Github open source.
+	a) Renamed packages from "com.cisco.dvbu" to "com.tibco"
+
+=========================
+Release Date: 2016-10-18
+=========================
+1) No changes for PDToolStudio.
 
 =========================
 Release Date: 2016-05-16
