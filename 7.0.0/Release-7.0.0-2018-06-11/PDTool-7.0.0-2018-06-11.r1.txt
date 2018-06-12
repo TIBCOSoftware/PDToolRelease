@@ -1,0 +1,1281 @@
+# (c) 2017 TIBCO Software Inc. All rights reserved.
+# 
+# Except as specified below, this software is licensed pursuant to the Eclipse Public License v. 1.0.
+# The details can be found in the file LICENSE.
+# 
+# The following proprietary files are included as a convenience, and may not be used except pursuant
+# to valid license to Composite Information Server or TIBCO® Data Virtualization Server:
+# csadmin-XXXX.jar, csarchive-XXXX.jar, csbase-XXXX.jar, csclient-XXXX.jar, cscommon-XXXX.jar,
+# csext-XXXX.jar, csjdbc-XXXX.jar, csserverutil-XXXX.jar, csserver-XXXX.jar, cswebapi-XXXX.jar,
+# and customproc-XXXX.jar (where -XXXX is an optional version number).  Any included third party files
+# are licensed under the terms contained in their own accompanying LICENSE files, generally named .LICENSE.txt.
+# 
+# This software is licensed AS-IS. Support for this software is not covered by standard maintenance agreements with TIBCO.
+# If you would like to obtain assistance with this software, such assistance may be obtained through a separate paid consulting
+# agreement with TIBCO.
+
+==================================
+PDTool 6.2/7.0 Release notes:
+==================================
+Section 1: Minimum Recommend DV Versions
+Section 2: Release notes (newest first)
+Section 3: To Upgrade an existing install
+
+==================================
+Section 1:
+Minimum Recommended CIS Versions:
+==================================
+CIS 7.0:  Hotfix  7.0.0.00.11 or higher
+CIS 6.2:  Hotfix  6.2.0.00.22 or higher for basic http access [non-https]
+CIS 6.2:  Hotfix  6.2.4.00.46 or higher for https access [PDTool over SSL]
+CIS 6.2:  Hotfix  6.2.5.00.24 or higher for pkg_import -nosourceinfo to work properly [Archive Module]
+
+==================================
+Section 2:
+Release Notes (newest first):
+==================================
+
+=========================
+Release Date: 2017-06-11
+=========================
+1) DeploymentManager
+	a) For all XML file, the actual registered trademark symbol was replaced with the text representation (R) as it caused problems with initSpring().
+
+2) Common Code (mtinius)
+	a) CommonUtils.maskCommand - Added specific tests for the VCS base type as there are code-specific checks per VCS type.
+	b) ScriptExecutor.executeCommand - When there is an error and the stderr is empty/null then return stdout if it is not null.
+		For GIT, the messages are returned on stdout for some return codes greater than 0.
+	c) Moved VCSWSDAOImpl.resolveExecCommandLineError to CommonUtils.resolveExecCommandLineError 
+		i) Added the ability for it to parse VCS_IGNORE_MESSAGES containing a wildcard "*".  Given the VCS_IGNORE_MESSAGES entry
+			"fatal: pathspec * did not match any files", it will resolve any message containing the text before and after the * but not
+			the variable text represented by the asterick.
+
+3) VCS Module (mtinius) [Fixed GIT]
+	a) VCSWSDAOImpl.execCommandLineVCS - When there is an error and the stderr is empty/null then return stdout if it is not null.
+	b) VCSManagerImpl.vcsInitWorkspaceCommon - For GIT only:
+		i) Create the workspace and VCS project root folder.
+		ii) Set the working directory to the VCS project root folder.
+		iii) Modified checkout command to use "." for the target folder instead of the VCS project root since the working directory is now VCS project root.
+				arguments=" checkout " + vcsStruct.getVcsOptions() + " " + remoteBranch + " ."
+		iv) Added an escape (% and $) of username and password after the URL encoder as a single % or $ is treated like a variable.  A double %% or $$ is escaped.
+		v)  Added " config --system core.longpaths true" in order to handle long path names in windows.
+	c) VCSManagerImpl.vcsInitializeBaseFolderCheckin
+		i) Added a call to initialize the workspace as this would not have been done the first time when calling this method.
+		ii) Added " config --system core.longpaths true" in order to handle long path names in windows. 
+	d) Added messages to VCS_IGNORE_MESSAGES for /resources/config/deploy_GIT_[DEV1|UAT1|PROD1].properties files and /resources/modules/VCSModule.xml
+		i)  "nothing to commit"
+		ii) "fatal: pathspec * did not match any files"
+	e) Modified AbstractLifecycleListener.handleErrors to only throw errors if the error is not present in VCS_IGNORE_MESSAGES
+		by invoking CommonUtils.resolveExecCommandLineError.
+	f) For GIT only, forced vcsCheckin to follow the vcsForcedCheckin code path due to circumstances where a similar concept of check in to SVN could not be ascertained.
+		vcsCheckin: The check-in path performs the following steps:				vcsForcedCheckin: The vcs forced check-in performs the following steps:
+			1) Export from CIS into temp dir										1) Check out from GIT
+			2) Diffmerger to do a GIT add/delete									2) Validate paths
+			3) Check out [this was wiping out the add/delete]						3) Export from CIS into temp dir
+			4) Validate paths														4) Diffmerger to do a GIT add/delete
+			5) Check in to GIT [commit and push]									5) Check in to GIT [commit and push]
+		The main difference is that vcsForcedCheckin performs the check out from GIT first to synchronize the workspace and then performs
+			the diff merger to add/delete resources with GIT followed by a check in to GIT.
+		Given the use case for PDTool, this was an acceptable resolution to this issue as PDTool is used for deployment and not typically for check in.
+			If it is used for check in, then synchronizing the workspace first before check in is acceptable.
+			
+		
+=========================
+Release Date: 2017-12-22
+=========================
+1) Transitioned all modules and documentation to TIBCO(R) Software Github open source.
+	a) Renamed packages from "com.cisco.dvbu" to "com.tibco"
+	b) Renamed XML namespace from "www.dvbu.cisco.com" to "www.tibco.com"
+	c) Added code to automatically convert .xml file namespaces as they are being accessed
+2) Archive Module (mtinius)
+	a) Fixed issue with pkg_import not importing when when printcontents was set to false.
+3) Automated Test Framework (mtinius)
+	a) For script_test_common.bat, changed all occurrences of ENV_TYPE to ENV_TYPE_NAME do to name conflict with other scripts.
+4) envBin scripts (mtinius)
+	a) Fixed issue where envConfig.cmd did not return to original directory when an error occurred.
+
+
+=========================
+Release Date: 2016-05-16
+=========================
+1) \bin Batch files: (mtinius)
+	a) Windows: 
+		Installer - SetupPDTool.bat - Fixed issue with target paths containing () such as C:\Program Files (x86)\Java\jre7
+		ExecutePDToolReleaase.bat - NEW script used to integrate with homegrown or 3rd part continuous integration or deployment tools.
+		ExecutePDTool.bat 
+			Added a new feature to allow ExecutePDTool.bat to return to the "PWD" previous working directory when PWD is set by an invoking batch file.
+				If the batch file completes successfully, exits due to an error, or exits dues to invalid usage, it will execute "if defined PWD cd %PWD%
+			Fixed issue with paths containing () such as C:\Program Files (x86)\Java\jre7
+		envStart.cmd 	- Added a new batch file that will create a new windows shell with PDTOOL_HOME, VCS_HOME, PDTOOL_BIN and PATH=%PDTOOL_BIN%;%VCS_HOME%;%PATH% set.
+							The default color scheme:  background=blue, foreground=white.  The invoker has the ability to change the color scheme.
+		The following command batch files require executing "envStart.cmd" first:
+			env.cmd			- Set the environment variables for envStart.cmd. 
+								Sets the PATH to %PDTOOL_HOME%\bin;%PDTOOL_HOME%\envBin to allow execution of the new command line scripts from any directory.
+								Has the ability to invoke envCustom.cmd if it exists to set custom variables.
+			encrypt.cmd 	- Encrypt a PDTool file.  It can be executed from any directory.  
+			envConfig.cmd 	- Translate a short name environment type such as DEV,UAT,PROD into the -config parameter such as -config deploy_UAT1.properties
+			envExec.cmd		- Run the -exec command for a .dp file from any directory such as the /plans directory.  Will auto-reference the /plans directory if run from /bin.
+			envAnt.cmd		- Run the -ant command for a .xml file from any directory such as the /ant directory.  Will auto-reference the /ant directory if run from /bin.
+			cdant.cmd		- Change directory to the /resource/ant
+			cdbin.cmd		- Change directory to the /bin
+			cdconfig.cmd	- Change directory to the /resource/config
+			cdmodules.cmd	- Change directory to the /resource/modules
+			cdplans.cmd		- Change directory to the /resource/plans
+	
+2) VCS Module (mtinius)
+	a) Added a new feature to allow "SVN" only the ability to allow the revision argument to be one of:
+		NUMBER       revision number
+		'HEAD'       latest in repository
+		'BASE'       base rev of item's working copy such as the tags directory
+		'COMMITTED'  last commit at or before BASE
+		'PREV'       revision just before COMMITTED
+		/resources/modules/VCSModule.xml shows an example of the use of BASE 
+	b) VCS Initialize
+		Explicitly remove the workspace directory only and not the workspace name folder which is higher up in the directory path
+			modified the OLD: removeDirectory(prefix, vcsStruct.getVcsWorkspace());
+			     to include the project root which pinpoints the removal down to the actual workspace directory 
+				 and not the parent folders which may contain configuration folders for plans and modules.
+			NEW: removeDirectory(prefix, (vcsStruct.getVcsWorkspace()+"/"+vcsStruct.getVcsProjectRoot()).replaceAll("//", "/"));
+	
+3) Privilege Module (mtinius)
+	a) Added a new feature to allow changing ownership on a resource at the same time as setting the privileges.
+		The PDToolModules.xsd was modified to add new XML nodes.
+		The method generatePrivilegesXML was modified to generate the <resourceOwner> node
+		The method updatePrivileges was modified to use <resourceOwner> and perform a "changeResourceOwner" for each resource where
+			<resourceOwner> is provided in the PrivilegeModule XML.  However, changing resource ownership on COLUMNS is not permitted.
+			Variables may be used within all XML tags.
+			Resource ownership may be applied recursively when specified as true.  Resource ownership will only be applied to the 
+			specified resource if <resourceOwnerRecurse> is false or not present in the PrivilegeModule XML.
+					<resourceOwnerRecurse>true</resourceOwnerRecurse>
+			Regarding the tag resourceOwnerApply:
+				When the <resourceOwnerApply> tag is specified as true, then resource owner ship is applied for the given resource.
+				When the <resourceOwnerApply> tag is specified as false, then resource owner ship is *NOT* applied for the given resource.
+				The deployment admin may use variables and thus provide the ability to use a common PrivilegeModule XML across environment,
+				giving them the ability to turn on and off applying resource ownership.  For example, the deployment admin may want to run
+				the privileges against UAT and PROD and apply resource ownership but not apply it when run against DEV to reset privileges.			
+			/resources/modules/PrivilegeModule.xml shows an example of the XML change.
+
+4) Datasource Module (mtinius)
+	a) Added the ability through updateDataSources to update a data source's keystore settings which are found on the Advanced tab in Studio.
+		This capability is similar to Studio, albeit automated, which allows a user to place a .jks or .pfx file in the file system
+		and automatically import it into a target data source.  The DatasourceModule.xml provides the deployer with a configuration for
+		the certificate keystore file path, keystore type and keystore password.
+			
+5) PDToolModules.xsd (mtinius)
+	a) Schema change to support PrivilegeModule changes.
+			<ns2:PrivilegeModule xmlns:ns2="http://www.dvbu.cisco.com/ps/deploytool/modules">
+				<resourcePrivilege>
+					<id>priv1</id>
+					<resourcePath>/shared/test00/DataSources/ServerAttributeDefinitions</resourcePath>
+		new-->	|-	<resourceOwner>
+				|		<resourceOwnerApply>true</resourceOwnerApply>
+				|		<resourceOwnerName>user2</resourceOwnerName>
+				|		<resourceOwnerDomain>composite</resourceOwnerDomain>
+				|		<resourceOwnerRecurse>true</resourceOwnerRecurse>
+				|-	</resourceOwner>
+					<recurse>true</recurse>
+					<privilege>
+						<name>USER2</name>
+						<nameType>USER</nameType>
+						<domain>composite</domain>
+						<privileges>READ WRITE EXECUTE</privileges>
+				   </privilege>
+				</resourcePrivilege>
+			</ns2:PrivilegeModule>
+			
+	b) Schema change to support DatasourceModule changes
+			<p1:DatasourceModule xmlns:p1="http://www.dvbu.cisco.com/ps/deploytool/modules">
+			  <datasource>
+			    <genericDataSource>
+			      <id>ds11</id>
+			      <resourcePath>/shared/test00/DataSources/testWebService</resourcePath>
+			      <!--Element keystore is optional-->
+		new-->	|-<keystore>
+				|   <!--Element keystoreAttributes is optional, maxOccurs=unbounded-->
+				|   <keystoreAttributes>
+				|     <keystoreFilePath>$PROJECT_HOME_PHYSICAL/resources/modules/cis_datasource_keystore.jks</keystoreFilePath>
+				|     <keystoreType>jks</keystoreType>
+				|     <keystorePassword>password</keystorePassword>
+				|   </keystoreAttributes>
+				|- </keystore>
+			    </genericDataSource>
+			  </datasource>
+			</p1:DatasourceModule>
+
+=========================
+Release Date: 2016-02-10
+=========================
+1) ExecutePDTool.bat (mtinius)
+	a) Fixed issue with drive letter when installed in a drive other than C:.  
+		The issue was that the batch file did not allow the network drive to be correctly established on drives other than C:.
+		The fix will now dynamically pick up the drive letter where PDTool is insalled such as D: or whatever it might be.
+
+2) Regression Module (mtinius)
+	a) Fixed undocumented issue from 9-22 release.
+		Issue: Execute a FUNCTIONAL (smoke) test failed due to unique checksum value included at end of the query.
+		Fix: Removed checksum value from the query from clause.
+		Undocumented feature: Add a unique checksum value to the outputFilename.  E.g. outputFilename=ViewSales2_4260575150.txt
+			The value is calcualted from the entire query signature and allows the tester to have multiple queries against the same resource
+			with different where clauses or different parameters and have the output be directed into its own unique file name.  
+			The outputFilename is created at generation time for Queries on Tables, Procedures and Web Services.
+	b) Added a new test type "functional_as_is" which allows execution of the generated smoke test input file "as is" without rewriting the queries. 
+		This is configured in the RegressionModule.xml file.  Structurally, the XML is exactly the same as a "functional" test.  
+		The same method "executeRegressionTest" is used to execute "functional_as_is" and "functional".
+		By contrast, the existing default test type "functional" uses the input file as a guide but rewrites the queries forcing them to use SELECT COUNT(*).
+	c) Reverted the time duration reported from four digits (.0000) back to three digits (.000).  The duration time reporting was broken as a result of a fix put
+		in back in July 2015.
+	
+3) PDTool Installer (mtinius)
+	a) Fixed issue where PDTool installer did not execute TFS eula
+
+4) Common XMLUtils (mtinius)
+	a) Fixed bug where encrypt would encrypt variables in servers.xml when allowVariables=true
+	b) Documented in servers.xml file how to use XML escape characters  for ',",<,>,&
+
+5) Datasource Module (mtinius)
+	a) Fixed issue with generateDatasourceModuleXML where it threw an exception on non-relational type sources where the subtype was null like the Excel non-ODBC datasource.
+	
+6) HTTPS Connection (cgoodric)
+	a) Fixed issue where http adapter was not properly connecting to CIS using HTTPS.
+	b) Known Issue: Access to ServerAttribute module using HTTPS throws an exception.
+
+7) VCS Module (mtinius)
+	a) Fixed issue where vcsCheckin or vcsForcedCheckin threw an exception when executing the tf.cmd status command if VCS_CHECKIN_OPTIONS=-associate:n.  
+		Resolution was to remove VCS_CHECKIN_OPTIONS from the tf.cmd status command but left it in for the actual tf.cmd checkin command.
+
+8) Logging (mtinius)
+	a) Added the following entry in /resources/config/log4j.properties to allow debugging of HTTP addpater for ServerAttribute Module and Privilege Module only.
+		# Common Adapter Framework Debugging includes:
+		# [all HTTP adapter code]
+		log4j.logger.com.cisco.dvbu.ps.common.adapters=INFO
+		
+9) Privilege Module (mtinius)
+	a) Fixed the XSLT generation in cis_adapter_config.xml to properly return an empty root node when no privileges were found.
+		This was causing an exception when no privileges were found for a resource in the Regression Module generate security XML.
+
+=========================
+Release Date: 2015-09-22
+=========================
+1) PDTool Installer for Windows (mtinius)
+	a) Added an installer whereby the developer/user can simply edit a single batch file and supply answers to the installation variables
+		and then execute the batch file to install PDTool.  The installer directory contains documentation and the following two scripts
+		to perform the installation.  The other advantage of the installer is that an Organization's PDTool Administrator can pre-configure
+		these batch files to insure consistent installation across the organization. The PDTool Administrator can configure the batch file
+		to have the developer or tester respond to all prompts or only the absolute necessary prompts such as the CIS and VCS password.  
+		Installation will be easy and uniform.
+			i)  PDTool-NOVCS.bat - Installation of PDTool for QA Testers who do not need VCS access.
+			ii) PDTool-VCS.bat - Installation of PDTool for Developers who require VCS access.
+	b) The installer will copy bin/setMyPrePDToolVars.bat and bin/setMyPostPDToolVars.bat to the parent installation folder above the 
+		PDTool folder and set the variables according to the variables set in the installer batch files PDTool-NOVCS.bat and PDTool-VCS.bat.  
+		The following files were modified to conform to using variables that are set by the installer.  It is important when making modifications
+		for your installation to conform to the variable naming conventions and patterns already established.  It will make installation and usage
+		of PDTool go smoother.
+			i)   bin/setVars.bat
+			ii)  resource/config/deploy_*.properties
+			iii) resources/modules/VCSModule.xml
+	c) New installation structure
+		<drive>:<any_directory>
+					/PDTool7.0.0_[TFS|SVN|GIT|P4|CVS|NOVCS]
+						setMyPrePDToolVars.bat  <-----|  (primary location for variable values)
+						setMyPostPDToolVars.bat <-----|
+						/PDToolStudio                 |
+							/bin/setVars.bat ---------|  (invokes setMyPrePDToolVars.bat and setMyPostPDToolVars.bat)
+							/resources/modules/VCSModule.xml - uses variables set by setMyPrePDToolVars.bat
+						/VCSClients
+							/CVS_client
+							/GIT_client
+							/P4_client
+							/SVN_client
+							/TFS_TEE_client
+		
+2) Automated Test Framework "ATF" (mtinius)
+	a) The Automated Test Framework puts an easy to use wrapper around the more difficult to configure Regression Module.  It takes the mystery
+		out of configuring the Regression Module.  The framework provides for automated generation of plan files, module files, and documentation
+		for a user-defined published resource.  The user decides at generation time what published database, catalog and schema they are targeting
+		for testing and the ATF will generate all of the necessary files for the QA Tester including documentation on how to execute the various
+		tests.
+
+3) Regression Module. (mtinius)
+	a) Updated Regression module to remove double quotes from file path for compareRegressionFiles.
+	b) Added output to compareLogs broken down by each type of count: 
+		Duration Match
+		Duration Improved
+		Duration Acceptable
+		----------------------------------
+		Total Succesful Comparisons
+		Total Failure Comparisons
+	c) Fixed CommonUtils.getElapsedDuration and CommonUtils.getLongDuration - Original calculation was incorrect.  4 decimal places is ten thousandths of a second, not milliseconds.
+	
+4) Datasource Module. (mtinius)
+	a) Updated DataSourceWSDAOImpl.takeDataSourceAction to catch and throw INTROSPECT errors when they come from the datasource.
+	b) Updated documentation to better describe interaction between "updateAllIntrospectedResources" and "planEntry" DatasourceModule.xml settings.
+
+5) VCSModule Module. (mtinius)
+	a) Added a check for operating system type for TFS to insure the proper login switch is used for Windows [/login] or UNIX [-login].
+	b) Added a new TFS environment variable "TFS_USE_EXISTING_WORKSPACE=[true|false]" to indicate whether to use an existing TFS workspace.  
+			This will not create a separate workspace for VCS integration. If this is true, CIS will only copy to/from the workspace 
+			and not check into TFS. It will record add, edits and deletes in the workspace.  This allows for tools like Visual Studio to 
+			perform the actual check-in to TFS.  This environment variable can be set in deploy.properties or VCSModule.xml.
+	c) Fixed TFS issue where the parent "folder.cmf" files were not checked-in/committed when the any of the parent folders were new in CIS
+		but never checked into TFS.  For example in TFS if /test1/test/test3 folder never existed and the CIS user decides to check-in
+		/shared/test00/test1/test2/test3/proc1 [PROCEDURE], the proc1 procedure would get checked in but the parent folders would be left 
+		in a pending state in TFS.  This left the door open for downstream deployment issues when the "folder.cmf" files were not committed.
+		The fix will get the "tf status" and determine what other folders in the parent lineage need to be checked in and perform the check-in
+		on each parent folder thus committing the "folder.cmf" files in the hierarchy.
+	
+6) ResourceCache Module (mtinius)
+	a) Fixed bug where resource exists check was incorrect for refreshResourceCache and clearResourceCache.
+	
+7) SUMMARY.log (mtinius)
+	a) Added additional columns for each execution line that provide "Server" information and a "ModuleObjective".
+		Server: Composed of the format: SERVERID=hostname:port.  E.g. DEV1_9420http=localhost:9420
+		ModuleObjective: Provides a brief synopsis of the last instruction being executed for each module.  If multiple "ids" are being executed, it
+			will only show the last one.  Each module is different so there will be different objectives.  It is meant to give the user a better idea
+			of what was happening at the time of execution without having to look through the app.log file.
+	b) Changed "Error" column to "Message" column as there may be warning messages.
+	c) Example SUMMARY.log
+	
+	Line #     Regression  Expected  Actual  ExitOnError    ActionType               ModuleAction                           Server                                              ModuleObjective                                                         Message                                               
+	---------  ----------  --------  ------  -------------  -----------------------  -------------------------------------  --------------------------------------------------  ----------------------------------------------------------------------  --------------------------------------------------  
+	Line  106  PASS        PASS      PASS    TRUE           ExecuteAction            createOrUpdateUsers                    DEV1_9420http=localhost:9420                        UPDATE : user3=user3@composite                                          none
+	Line  130  PASS        PASS      PASS    FALSE          ExecuteAction            updateDataSources                      DEV1_9420http=localhost:9420                        UPDATE : ds3=/shared/test00/DataSources/testWebService                  none
+	Line  146  PASS        PASS      PASS    TRUE           ExecuteAction            executeProcedure                       DEV1_9420http=localhost:9420                        EXECUTE : testproc                                                      none
+	Line  243  PASS        PASS      PASS    TRUE           ExecuteAction            updatePrivileges                       DEV1_9420http=localhost:9420                        UPDATE : priv2=/services/webservices/TEST00/testWebService              none
+	Line  297  PASS        PASS      PASS    TRUE           ExecuteAction            vcsCheckout2                           DEV1_9420http=localhost:9420                        CHECKOUT : Rev=HEAD : /services/databases/TEST00                        Warning: Checkout.car does not exist.  Nothing to import.
+	Line  336  PASS        PASS      PASS    TRUE           ExecuteAction            executeRegressionTest                  DEV1_9420http=localhost:9420                        EXECUTE_FUNCTIONAL : Id=Test1                                           MODULE_INFO: Regression Summary: Successful=11 Skipped=0 Failed=8
+	Line  348  PASS        PASS      PASS    TRUE           ExecuteAction            executePerformanceTest                 DEV1_9420http=localhost:9420                        EXECUTE_PERFORMANCE : Id=Test3.1                                        MODULE_INFO: Performance Summary: Successful=10 Skipped=8 Failed=1
+
+=========================
+Release Date: 2015-03-31
+=========================
+1) Resource Module. (mtinius)
+	a) Modified PDToolModules XML Schema to allow ResourceModule.ResourceType.resourcPath to have an iteration of paths that can be acted upon.
+		Additionally added ResourceModule.ResourceType.ignoreErrors so that createFolder can be instructed to ignore errors when creating a folder
+		in the event a folder is attempted to be created within a datasource, virtual database or virtual web service.
+	b) Modified code to loop through resourcePath iteration for all resource methods.  
+	c) Modified "createFolder" and "createFolders" to utilize multiple resource paths and ignore errors flag.  Modified code to evaluate the
+		type of resource it is trying to create within the context of current CIS paths.  Throw an error if an attemp to create folder occurs
+		within a data source, virtual database or a virtual web service.  Ignore creation of folders if they are system level folders.
+	d) Updated the documentation and added a missing method "doResourceExist" as well as adding information on new parameter for createFolder.
+	
+2) Server Module. (mtinius)
+	Modified the code to more clearly check the status of the server in preparation for CIS 7.0.  
+	In 6.2.x the status is in lower case but in 7.0 the status is in upper case so code forces all status to upper case.
+	
+3) Server Attribute Module. (mtinius)
+	Modified the code to clearly identify API calls for 6.2.x and 7.0.x in preparation for CIS 7.0 since the API's are different.
+		Effectively there is no real change for 6.2.x.
+
+4) Privilege Module. (mtinius)
+	a) Modified the code to clearly identify API calls for 6.2.x and 7.0.x in preparation for CIS 7.0 since the API's are different.
+		Effectively there is no real change for 6.2.x.
+	b) Modified PDToolModules XML schema and added updateDependentsRecursively to the PrivilegeModule Schema in preparation for CIS 7.0.
+
+5) Rebind Module. (mtinius)
+	a) Allow the use of variables to be used on various elements for the RebdindModule XML.
+
+6) Resource Cache Module (mtinius)
+	a) Allow the use of variables to be used on various elements for the ResourceCacheModule XML.
+	b) Modified "getResourceCacheConfig" to insure that the proper default values are set for configured=false and enabled=false.
+	
+7) Documentation (mtinius)
+	a) Updated all documentation with Cisco format.
+	b) Consolidated "Cisco AS Promotion and Deployment Tool Module Definitions.doc" into "Cisco AS Promotion and Deployment Tool User's Guide v1.0.doc"
+	c) Removed VCS_Specific files as these can all be found on the internet. [svn-book1.7.pdf, Perforce-Intro.pdf, Perforce_cheat_sheet.pdf, Perforce_p4v_GettingStarted_2012.pdf]
+
+8) Soap HTTP Adapter (mtinius)
+	a) Introduced the concept of Soap HTTP adapters for connecting to CIS rather than the CIS Admin API XML Beans libraries.
+	  Only used for Server Attribute Module and Privilege Module at this time.  All other modules still use the CIS Admin API.
+	  The advantage to using the Soap HTTP adapter is that the code base is not dependentant on a particular library to be loaded into the classpath
+	    therefore making the code generic.  Adaptation to a CIS version is accomplished through XSLT mappings which map the request and response documents
+	    between CIS and PDTool Module XML.
+
+9) VCSModule (cgoodric)
+	a) Added support for VCS integration with Github.  Supported: Check-in, Check-out.
+	b) Not Supported: Forced Check-in is not supported at this time.
+	
+10) execCisDeployTool (mtinius)
+	a) Provided the ability to use variables for param1 and param2
+		# Param1=[PASS or FAIL]  :: Expected Regression Behavior.  Informs the script whether you expect the action to pass or fail.  Can be used for regression testing.
+		# Param2=[TRUE or FALSE] :: Exit Orchestration script on error
+	b) Fixed a bug when Param1=FAIL and Param2=TRUE the script will exit.  In this scenario, the expected behavior is for the script to FAIL and not exit processing when it fails.
+	    Fixed the processing so that it continues the script and notifies the user that there was an error.
+	c) Fixed a bug when Param1=FAIL and Param2=TRUE the script will exit.  In this scenario the expected behavior is for the script to FAIL and throw an exception when actual result is successful.
+	    Fixed the processing so that it throws an exception when processing is succesful but it was expected to FAIL.  In this case, success is a failure.
+	d) Summary of expected behavior
+		Expected Behavior=PASS
+		Line #     Regression  Expected  Actual  ExitOnError  Script Processing
+		---------  ----------  --------  ------  -----------  ---------------------          
+		Line    1  PASS        PASS      PASS    TRUE         Continues          tested.	Line    1   SCRIPT_RESULTS=PASS  EXPECTED=PASS  ACTUAL=PASS  EXIT_ON_ERROR=TRUE  ACTION=<moduleAction>
+																							***** COMPLETED DEPLOYMENT ORCHESTRATION SUCCESSFULLY *****				
+		Line    1  PASS        PASS      PASS    FALSE        Continues          tested.	Line    1   SCRIPT_RESULTS=PASS  EXPECTED=PASS  ACTUAL=PASS  EXIT_ON_ERROR=FALSE  ACTION=<moduleAction>
+																							***** COMPLETED DEPLOYMENT ORCHESTRATION SUCCESSFULLY *****		
+		Line    1  FAIL        PASS      FAIL    TRUE         Exits with error   tested.	Line    1   SCRIPT_RESULTS=FAIL  EXPECTED=PASS  ACTUAL=FAIL  EXIT_ON_ERROR=TRUE  ACTION=<moduleAction>
+																							Abnormal Script Termination. Script will exit.  ERROR=Review Stack Trace for details.
+		Line    1  FAIL        PASS      FAIL    FALSE        Continues          tested.	Line    1   SCRIPT_RESULTS=FAIL  EXPECTED=PASS  ACTUAL=FAIL  EXIT_ON_ERROR=FALSE  ACTION=<moduleAction>
+																							Line    1   MESSAGE=Abnormal Script Termination. Script is set to continue processing.  ERROR=Review Stack Trace for details.
+																							***** COMPLETED DEPLOYMENT ORCHESTRATION SUCCESSFULLY *****
+		Expected Behavior=FAIL
+		Line #     Regression  Expected  Actual  ExitOnError  Script Processing
+		---------  ----------  --------  ------  -----------  ---------------------          
+		Line    1  PASS        FAIL      FAIL    TRUE         Continues          tested.	Line    1   SCRIPT_RESULTS=PASS  EXPECTED=FAIL  ACTUAL=FAIL  EXIT_ON_ERROR=TRUE  ACTION=<moduleAction>
+																							Line    1   MESSAGE=Expected Script Error. Script will continue processing.  ERROR=Review Stack Trace for details.
+																							***** COMPLETED DEPLOYMENT ORCHESTRATION SUCCESSFULLY *****
+		Line    1  PASS        FAIL      FAIL    FALSE        Continues          tested.	Line    1   SCRIPT_RESULTS=PASS  EXPECTED=FAIL  ACTUAL=FAIL  EXIT_ON_ERROR=TRUE  ACTION=<moduleAction>
+																							Line    1   MESSAGE=Expected Script Error. Script is set to continue processing.  ERROR=Review Stack Trace for details
+																							***** COMPLETED DEPLOYMENT ORCHESTRATION SUCCESSFULLY *****
+		Line    1  FAIL        FAIL      PASS    TRUE         Exits with error   tested.	Line    1   SCRIPT_RESULTS=FAIL  EXPECTED=FAIL  ACTUAL=PASS  EXIT_ON_ERROR=TRUE  ACTION=<moduleAction>
+																							Line    1   MESSAGE=Abnormal Script Termination.  ERROR=Expected error but execution was successful.
+																							Abnormal Script Termination. Script will exit.  ERROR=Expected error but execution was successful.
+		Line    1  FAIL        FAIL      PASS    FALSE        Continues          tested.	Line    1   SCRIPT_RESULTS=FAIL  EXPECTED=FAIL  ACTUAL=PASS  EXIT_ON_ERROR=FALSE  ACTION=<moduleAction>
+																							Line    1   MESSAGE=Abnormal Script Termination. Script is set to continue processing.  ERROR=Expected error but execution was successful.>
+																							***** COMPLETED DEPLOYMENT ORCHESTRATION SUCCESSFULLY *****
+
+=========================
+Release Date: 2014-12-15
+=========================
+1) Updated ExecutePDTool.bat file. (mtinius)
+	a) New Features
+		1. Substitute Drive - Check if substitute drive exists and don't create it again if it does.
+			Verify the substitute drive against the existing substitute path list.  Stop executing if the requested drive and path do not match
+			what is currently defined by the "subst" list.
+		2. New option -release RELEASE_FOLDER - this provides the ability to pass in the release folder dynamically which gets set as an 
+			environment variable and can be used as an additional parameter for a deployment from the release folder.
+		3. Output batch file message to app.log - Optionally, output the ExecutePDTool.bat messages to app.log.
+		4. Set propertyOrderPrecedence as a JVM variable so that the java code will pick it up if changed in the environment and not the property file.
+		5. Parse the parameters before calling setVars.bat so that -release RELEASE_FOLDER can be passed into setVars.bat.
+		6. Added debug=[0|1] print out and printVars=[0|1] to the setVars.bat file to print out the variables that were set if desired.
+		7. Added the ability to invoke a post-processing batch file such as setMyPostPDToolVars.bat in addition to the pre-processing batch file setMyPDToolVars.bat.
+	b) Fixes
+		1. writeOutput - fixed removal of double quotes at the beginning and end of a message but not the double quotes within the message.
+		2. Get PARAM list - Gets any number of parameters even 9 or more and with double quotes.  Accurately displays them in call:USAGE.
+	
+2) setVars.bat (mtinius)
+	a) Added ability to invoke pre- and post- processing batch files.  Standardized the approach to setting variables.
+	   This allows for creating a standard packaging of PDTool for organizations to be able to simply unzip a package on a user's desktop.
+	   setVars.bat becomes the generic base-line for setting variables while setMyPrePDToolVars.bat and setMyPostPDToolStudioVar.bat
+	   become the point of customization.   Even studio.properties can be a generic file that uses custom variables.
+	   The idea is to minimize the point of customization to the 2 files below for each person.
+	b) Including a standardized sample for pre-processing of variables: setMyPrePDToolVars.bat.
+	c) Including a standardized sample for post-processing of variables: setMyPostPDToolVars.bat.
+	
+3) deploy.properties (mtinius)
+	a) Option: VCS_WORKSPACE_INIT_LINK_OPTIONS
+		Workspace Initialization.  Link workspace to VCS repository equates to svn import -m "linking workspace to the VCS repository" ... etc.
+		For subversion only.  added -IGNORE_INIT_LINK - This option is used to ignore this step when users have READ-only access and will only 
+		be doing check-out from subversion and not check-in.
+
+4) Order of Precedence (mtinius)
+	a) Fixed the order of precedence detection.  Check JVM then PROPERTY_FILE and then SYSTEM for any changes.  Reverts to default precedence if nothing is found.
+	
+5) DataSource Module (mtinius)
+	a) PDToolModules.xsd - modified schema "RelationalDataSourceType.port" from Integer to String to allow the use of variables.  Validation of Integer is still done in the code.
+	b) Modified DataSourceModule.xml sample to show an example of a variable for the port.
+	
+=========================
+Release Date: 2014-11-18
+=========================
+1) Enhanced ResourceModule executeProcedure and executeConfiguredProcedures(mtinius):
+	a) Added the ability to print to the console window and log the procedure output variables.
+		The same procedure is overloaded with a new parameter "outputReturnVariables" [optional].
+			true=output the values of the return variables from the procedure call to the console/log.
+			false=do not output the return variable values.
+		Limitations:
+			* This method only supports all scalar values or one cursor output.
+			* This method does not support procedure calls with no output.
+			* This method does not support procedure calls with mixed scalar and cursor output.
+			* This method has been enhanced to print out the result scalar values or cursor output.
+2) Updated the license in all files.
+	
+=========================
+Release Date: 2014-08-25
+=========================
+1) Enhanced log4j Debugging (mtinius):
+	a) Added more informative debug messages for each invocation to CIS where "port.method_name" is referenced.   This will allows developers/users to see
+		exactly what is being passed into CIS.  it also provides the ability to determine if exceptions occur as a result of PDTool or CIS.  There are 
+		success statements placed directly after each CIS invocation.  To turn on a high-level of debugging modify /resourcs/config/log4j.properties as shown below:
+			# PDTool Module Debugging for Command-line and Ant (Applies to *ALL* Modules)
+			log4j.logger.com.cisco.dvbu.ps.deploytool=DEBUG
+			# Common Utility Framework Debugging includes:
+			# [CommonUtils, PropertyManager, PropertyUtil, ScriptExecutor, XMLUtils, JdbcConnector]
+			log4j.logger.com.cisco.dvbu.ps.common.util=DEBUG
+
+2) Added additional documentation (mtinius):
+	a) Added PDTool Training powerpoints using Cisco format
+		01 PDTool Training - Introduction v2.0.pptx
+		02 PDTool Training - PDTool Studio Version Control v2.0.pptx
+		03 PDTool Training - Deployment v2.0.pptx
+		04 PDTool Training - Testing v2.0.pptx
+		05 PDTool Training - VCS Multi-Tenant v2.0.pptx
+		
+=========================
+Release Date: 2014-07-10
+=========================
+1) VCS Module (mtinius):
+	a) Added an exception from VCS Diff Merger method when a path cannot be found.  Prefixed error with "Application Error:".
+	b) Removed the text ending with "ApplicationException" from errors that are supposed to be ignored so that the log can be parsed for actual errors.
+
+2) ExecutePDTool.bat (mtinius):
+	a) Modified so that any error that comes from the batch file is prefixed consistently by "Execution Failed::".  This will make the log easier to parse.
+	
+3) Parsing a log file for errors.
+	Parse the log file for the following text in this order:
+		"Application Error:"					-- Comes from Diff Merger method
+		"CompositeException:"					-- Comes from java code exception
+		"ApplicationException:"					-- Comes from java code exception
+		"ValidationException:"					-- Comes from java code exception
+		"Execution Failed::"					-- Comes from batch file exception
+			
+=========================
+Release Date: 2014-06-30
+=========================
+1) VCS Module (mtinius):
+	a) Resolved issue where VCS archive import, export and diffmerger were not being written to app.log.
+	b) Throw an exception when diffmerger determines a path "could not be located".   This could be a mis-configuration by the deployment person.
+	
+2) Regression Module (mtinius):
+	a) Fixed bug where any white space found after a query and before a separator [QUERY], [PROCEDURE], or [WEB_SERVICE] caused the query parser to interpret many queries as a single query.
+		This resulted in the execution of the query failing.
+	b) Added the parameter "outputFilename" to the regression input file.  This will provided a way of identifying an output file name for queries that contain subqueries.  Prior
+		to this, PDTool made a best effort to construct the filename from the "FROM" clause.  However, when a subquery is used in the "FROM" clause there is no way to decipher a
+		filename from that query.
+	c) Documented the concept of a Query Governor for [QUERY] and [PROCEDURE].  Use SELET TOP n <column-list> FROM <CATALOG.SCHEMA.VIEW|PROCEDURE> within the regression input file.
+		This requires modifying any generated queries to add the TOP command.
+		
+=========================
+Release Date: 2014-06-13
+=========================
+1) VCS Module (mtinius):
+	a) vcsInitializeBaseFolderCheckin - providing support for <TYPE=DATABASE> and [TYPE=DATABASE], <TYPE=CATALOG> and [TYPE=CATALOG], <TYPE=SCHEMA> and [TYPE=SCHEMA]
+	b) Updated method vcsScanPathLength and vcsScanPathLength2 to pass in an additional parameter vcsMaxPathLength which is used to compare against the length of the path.
+	   If the max path length passed in is zero then set it to the default max windows path length. 
+	   If the max path length passed in is greater than the max windows path length then set it to the default max windows path length.
+
+2) Regression Module (mtinius):
+	a) Fixed issue where baseDir was not being created when different patterns of slashes were used like C:\\tmp/pdtool\functest.
+	b) Fixed issue where SQL text from input file was not formatted properly when it occurs on multiple lines.  Newline characters are replaced with spaces prior to display or execution.
+
+3) deploy.properties - Added variable "propertyOrderPrecedence" in order to give the user control over the precedence of order in which variables are retrieved.
+	The property order of precedence defines which properties are retrieved in what order.
+	   JVM - These are properties that are set on the JVM command line with a -DVAR=value
+	   PROPERTY_FILE - These are the variables set in the configuration property file like deploy.properties or in the VCSModule.xml
+	   SYSTEM - These are variables that are set in batch files in the operating system prior to invocation of PDTool.
+	 If left blank, the default=JVM PROPERTY_FILE SYSTEM
+	 However, it may be necessary to be able to override what is in the property file and pick up an environment variable first.
+	 propertyOrderPrecedence=JVM SYSTEM PROPERTY_FILE
+
+=========================
+Release Date: 2014-05-28
+=========================
+1) Server List-servers.xml (mtinius):
+	a) added attribute <allowVariables>true|false</allowVariables> to control whether variables should be used or not in order to force
+	   backward compability with previously releases.  Resolves issue with 2014-05-19 release where there was no choice which disrupted
+	   passwords containing $ or % in them.  Now the user can decide whether all attributes or no attributes can have variables.  If
+	   allowVariables=true then <encryptedPassword> may "not" have the values $ or % in them unless they are variables.
+	   
+1) VCS Module (mtinius):
+	a) Externalized the CIS Import and Export options.  Modified the schema PDToolModules.xsd.
+	   This allows more flexibility in controlling what happens during VCS CIS import/export operations.  For example, the default behavior during
+	   import is to add the import option: -includeaccess.  However, if the user does not have privileges to modify users, then the command will fail.  
+	   This provides the user with the ability to set the options according to access.
+	   
+	   Added VCS_CIS_IMPORT_OPTIONS to deploy.properties and VCSModule.xml
+		# VCS Resource Import Options:
+		#   Occurs during a vcsCheckout when the temporary checkout.car file is imported into the target server.
+		#   The import is the final step in the process.  The backwards compatible option is to include access: -includeaccess 
+		#   Consult the Archive Module documentation for more options.
+		VCS_CIS_IMPORT_OPTIONS=-includeaccess
+
+	   Added VCS_CIS_EXPORT_OPTIONS to deploy.properties and VCSModule.xml
+		# VCS Resource Export Options:
+		#   Occurs during a vcsCheckin when the temporary checkout.car file is exported from the target server.
+		#   The export from the target is used to compare resources against the VCS repository.  The backwards compatible option is leave this option blank.
+		#   Consult the Archive Module documentation for more options.
+		VCS_CIS_EXPORT_OPTIONS=
+		
+	b) Added VCS_BASE_TYPE to both deploy.properties and VCSModule.xml
+		Recommended options=[SVN, CVS, P4, or TFS]. Choose to coincide with VCS_TYPE.
+		This can be used as a default option when constructing the VCS_WORKSPACE_NAME and VCS_TEMP_DIR name.
+
+=========================
+Release Date: 2014-05-19
+=========================
+1) VCS Module (mtinius):
+	a) Added the ability to set/extract variables from TFS_SERVER_URL and the VCS_Module.xml variables.
+	b) Added the ability /bin/setVars.bat to invoke a separate setMyVars.bat file in the users home directory for presonal variable settings.
+	c) Added checks for substitute drive in ExecutePDTool.bat and ExecutePDToolStudio.bat.
+	d) Added new method vcsScanPathLength and vcsScanPathLength2 which is used to report paths in CIS that are longer than 259 characters.
+	   This is mainly an issue for TFS and not subversion.  Subversion is able to handle the long file names with no issues.
+	   This method helps the developers to uncover issues in CIS prior to checking in resources.   
+	   This should be run by a senior developer who has access to PDTool as PDToolStudio does not support this feature.
+	e) Added the ability to set variables for all servers.xml atttributes.  Note if a password contains a $ or % then a variable cannot be used 
+	   for the <encryptedPassword> attribute.
+	   
+=========================
+Release Date: 2014-04-12
+=========================
+1) VCS Module (mtinius):
+	a) Added the ability to initialize the VCS with the Composite repository base folders and custom CIS folders.
+	   Supported in this release: Subversion, TFS, Perforce
+	   Not supported in this release: CVS
+	   The use cases for this feature support multi-tenant environments or CIS repository installations where there
+	   are 10s of 1000s of resources and not all resources will be placed under version control.  The base-level
+	   folders are mandatory when establishing the VCS repository.  Without these folders being properly checked-in, 
+	   the check-out process will not work properly.  The traditional way of approaching this was to check-in root (/)
+	   to insure all base-level folders were checked in.  However, the downside to this is that then entire Composite
+	   repository was also checked in.  This may not be desirable if there are 10s of 1000s of resources.  The other
+	   requirement is that all intermediate folders leading up to the actual tenant folder must be checked in.  The only
+	   way that this could have been done in the past was to check-in starting at that folder which in turn would check in
+	   all folders within that path.  If there were other tenant folders within that path, they would also be checked in.
+	   
+	   The following two methods have been added to PDTool to provide the flexibility for initializing the VCS repository
+	   with base-level folders and custom CIS folders.
+	   public void vcsInitializeBaseFolderCheckin(String customPathList, String vcsUser, String vcsPassword) throws CompositeException 
+	   public void vcsInitializeBaseFolderCheckin(String vcsConnectionId, String customPathList, String pathToVcsXML, String vcsUser, String vcsPassword) throws CompositeException 
+	   
+	   The following element was added to PDToolModules.xsd:  <VCS_BASE_FOLDER_INIT_ADD></VCS_BASE_FOLDER_INIT_ADD>
+
+	   
+=========================
+Release Date: 2014-03-26
+=========================
+1) [Required]: Upgrade existing XML Files
+	a) For all releases prior to 2014-03-12, modify the XML namespace from www.compositesw.com to www.dvbu.cisco.com
+		i) Before:  xmlns:p1="http://www.compositesw.com/ps/deploytool/modules"
+		ii) After:  xmlns:p1="http://www.dvbu.cisco.com/ps/deploytool/modules"
+		
+	b) For the 2014-03-12 release modify the XML Files namespace from www.cisco.dvbu.com to www.dvbu.cisco.com:
+		i) Before:  xmlns:p1="http://www.cisco.dvbu.com/ps/deploytool/modules"
+		ii) After:  xmlns:p1="http://www.dvbu.cisco.com/ps/deploytool/modules"
+	
+2) Source clean-up
+	a) Removed @override from all source as it was causing compilation errors with the new version of Eclipse.
+	b) Placed RepoUtils.properties in the /bin and removed from /lib
+	
+3) Archive Module - Variable processing.
+	a) Added variable processing for ArchiveModule.xml.
+	b) Added "debug3" check to output archive command line when deploy.properties DEBUG3=true
+	
+=========================
+Release Date: 2014-03-12
+=========================
+1) Open Source Release (mtinius)
+	a) Prepared PDTool for open source.  
+	b) Changed package names from com.compositesw to com.cisco.dbvu
+	c) Modified XML Schema Target Namespace to xmlns:p1="http://www.cisco.dvbu.com/ps/deploytool/modules"
+	d) Changed distribution jar file name from CisDeployTool.jar to PDTool.jar.
+	e) Changed XML Schema jar from CisDeployToolModules.jar to PDToolModules.jar
+	f) Updated documentation.
+	
+2) [Required]: Upgrade existing XML Files
+	a) The XML Namespace must be changed from www.compositesw.com to www.cisco.dvbu.com
+		i) Before:  xmlns:p1="http://www.compositesw.com/ps/deploytool/modules"
+		ii) After:  xmlns:p1="http://www.cisco.dvbu.com/ps/deploytool/modules"
+	
+3) Regression Module (mtinius) - Added security testing capability.
+	a) Added new functionality (executeSecurityTest and generateRegressionSecurityXML) capabilities.
+
+4) Privilege Module (mtinius) - Added support for new parameter.
+	a) updateDependenciesRecursively - If "true", then all dependencies of the given resources will recursively be updated with the privileges assigned to their parent.
+	
+5) VCS Module (mtinius) - Added fix for filename/path too long issue.
+	a) Resolved issue when running PDTool in windows and the path names are longer than 259 characters. Resolved for subversion and TFS.  Has not been resolved for Perforce or CVS.
+	b) Caveat:  Since TFS is built on windows, TFS itself contains the 259 character limitation and therefore, it will still throw errors.  This is a known problem with TFS.
+	
+6) VCS Module (mtinius) - Added additional command line option variables for workspace initialization, checkin and checkout
+	a) Options were added to deploy.properties, studio.properties and VCSModule.xml file.
+	b) PDToolModule.xsd was modified to support additional properties
+	c) List of property additions include:
+		# Workspace Initialization.  Create new workspace: 				VCS_WORKSPACE_INIT_NEW_OPTIONS=
+		# Workspace Initialization.  Link workspace to VCS repository: 	VCS_WORKSPACE_INIT_LINK_OPTIONS=
+		# Workspace Initialization.  Get resources from VCS repository: VCS_WORKSPACE_INIT_GET_OPTIONS=
+		# Resource Checkin. Checkin resources to VCS: 					VCS_CHECKIN_OPTIONS=
+		# Resource Checkin Required. Checkin resources to VCS: 			VCS_CHECKIN_OPTIONS_REQUIRED=
+		# Resource Checkout. Checkout resources to VCS: 				VCS_CHECKOUT_OPTIONS=
+		# Resource Checkout Required. Checkout resources to VCS: 		VCS_CHECKOUT_OPTIONS_REQUIRED=
+	d) Added validation for VCS_TYPE.  Allowed values=SVN, P4, CVS, TFS2005, TFS2010, TFS2012, TFS2013
+
+7) DEPRECATED: The property TFS_CHECKIN_OPTIONS has been deprecated.  Use VCS_CHECKIN_OPTIONS instead.
+
+8) All modules (mtinius) - extended support for variables.
+	a) Added support for extracting variables from the module id in a deployment plan.
+	b) Added support for variables in various resource paths from different module XML.
+
+=========================
+Release Date: 2014-02-04
+=========================
+1) Regression Module (ssternin) - Resolved issue where file checksum is different on two files where the result rows are the same but in a different order.
+	SQL does not guarantee order of results.  File checksum is now calculated on a row-by-row basis and summed up for two files and then the overall checksum is compared.  
+
+2) Resource Cache Module (mtinius) - Provided an enhancement (updateResourceCacheEnabled) method that will enable/disable all configured caches
+	for a given starting resource path.  The method will recursively walk the starting folder and sub-folders, interrogate existing configured caches and 
+	set the enable flag according to how the flag is configured in the ResourceCacheModule.xml.
+
+3) Archive Module (cgoodrich) - Resolved ability to use -nosourceinfo flag.
+	When exporting a wsdl/soap data source with –nosourceinfo. Attributes (like certificates) specified in the advanced tab are retained on import to a target env. 
+	The target CIS Server must be patched to at least 6.2.5.00.24 which allows the pkg_import flag -nosourceinfo to work properly to leave out certificates.  
+	The flag in PDTool is called Includesourceinfo=true/false.
+
+4) VCS Module, Archive Module (cgoodrich) - Ability to login using https (PDTool over SSL).
+	Updated PDTool jar files with the jars from 6.2.5.  Tested backward connectivity to 6.2.3.
+	Added security option trustStore setting to setVars.bat and setVars.sh which is to be enabled when connecting with https.
+	Documented steps for enabling HTTPS connectivity using PDTool.  Server configuration is required.  CIS Server patching may be required. 
+	Requires CIS to be patched to 6.2.4.00.46 or higher for the resetNamespace to work properly.
+
+5) PDTool over SSL (https) (cgoodrich/mtinus) - 
+	Modified /bin/setVars.bat and setVars.sh to include CERT_ARGS setting defaulted to weak trustStore included with PDTool.
+	Updated the Installation Guide.
+
+6) HTTP Proxy (tonyoung, mtinius) - Updated batch files to support HTTP Proxy.
+	Modified /bin/setVars.bat and setVars.sh to include HTTP_PROXY in the JAVA_OPT settings.
+	Updated the Installation Guide.
+	
+7) VCS Module (mtinius) - Validated VCONN ID and printed VCONN debug info.
+	a. When the VCONN ID is not found in the VCSModule.xml, it was defaulting to connection information in deploy.properties.
+		This in general is not good because this could produce undesired results.  It will now throw an error when VCONN ID is not found.
+		That issue also resulted in the VCS_OPTIONS containing repeated username and passwords for subsequent executions in a row.
+		This was fixed by virtue of not allowing the code to proceed unless a valid VCONN ID was found.
+	b. Print our debug information for VCONN ID.
+	c. Added validation for VCS_TYPE.  Allowed values=SVN, P4, CVS, TFS2005, TFS2010, TFS2012
+
+8) Archive Module (mtinius) - Default ArchiveModule.xml <encrypt> flag to true when servers.xml <useHttps> flag is true.
+	By overriding the encrypt flag and setting to true when useHttps=true, it provides a consistent interface for the user otherwise the user
+	will have to set both flags to true when PDTool over SSL (https) is being used.  An exception is thrown during Archive Module operations
+	when encrypt=false and useHttps=true.  When useHttps=false, the encrypt flag is used as it is defined in the ArchiveModule.xml file.
+	
+9) Trigger Module (cgoodrich, mtinius) - Fixed issue where start time was not being generated for mode=NONE (Exactly Once).
+
+10) All Modules (mtinius) - Print out "Server Info" consistently for all modules and methods.
+
+11) Regression Module (mtinius) - Web Service with no input params and HTTPS access
+	a. Fixed issue where default string of "null" was output to the regression input file when generating web service entries in the input file.
+	b. When connecting over HTTPS defaulted the regression input file "encrypt" flag to true when servers.xml useHttps=true.
+	c. Added the resources filter to createRegressionInputFile method.
+	d. Fixed resources filter comparison to use equal when no wildcard is present and startsWith when a wildcard "*" is present.
+
+=========================
+Release Date: 2013-12-10
+=========================
+1) All Modules (mkazia) - General capability to login to PDTool using https.
+
+2) Regression Module (mtinius) - Resolved input file generation with complex SQL.  Resolved database objects with embedded spaces and periods.
+
+=========================
+Release Date: 2013-09-09
+=========================
+Author: mtinius
+1) DataSource Module - Introspection enhancement and updated documentation.
+
+	introspectDataSources - Introspect Data Source method introspects data sources for the passed in data source ids list found 
+		in the the passed in datasources.xml file for the target server Id.  The method allows the invoker to add, update or remove resources.
+		The use case is relavent when the target catalog/schema is different than the one defined in the source system.
+		
+																______ Different schema name for the different environments
+															   |
+															   v
+		Example:  	DEV: 	/shared/MyProject/MY_DS/MY_SCHEMA_DEV/MY_TABLE
+					TEST:	/shared/MyProject/MY_DS/MY_SCHEMA_TST/MY_TABLE
+					PROD:	/shared/MyProject/MY_DS/MY_SCHEMA_PRD/MY_TABLE
+					
+					Solution: Use introspectDataSources.  
+					The following DataSourceMdule.xml entry example adds MY_TABLE to the production schema:
+					<datasource>
+						<introspectDataSource>
+							<id>ds7</id>
+							<resourcePath>/shared/MyProject/MY_DS</resourcePath>
+							<!--Element runInBackgroundTransaction is optional-->
+							<runInBackgroundTransaction>false</runInBackgroundTransaction>
+							<reportDetail>FULL</reportDetail>
+							<plan>
+								<updateAllIntrospectedResources>true</updateAllIntrospectedResources>
+								<failFast>true</failFast>
+								<commitOnFailure>true</commitOnFailure>
+								<autoRollback>true</autoRollback>
+								<scanForNewResourcesToAutoAdd>false</scanForNewResourcesToAutoAdd>
+								<!--Element planEntry is optional-->
+								<planEntry>
+									<resourceId>
+										<resourcePath>MY_SCHEMA_PRD/MY_TABLE</resourcePath>
+										<resourceType>TABLE</resourceType>
+										<subtype>DATABASE_TABLE</subtype>
+									</resourceId>
+									<action>ADD_OR_UPDATE</action>
+								</planEntry>		
+							</plan>
+						</introspectDataSource>
+					</datasource>
+
+	generateDataSourceAttributeDefs - Generate Data Source Attribute Definitions for the passed in starting path and the target server Id.
+		The method allows the invoker generate a file of data source attribute definitions.  This method will be useful when the user wants to determine what
+		valid attributes are available for a given data source.
+		
+	generateDataSourceAttributeDefsByDataSourceType - Generate Data Source Attribute Definitions for the passed in data source type and the target server Id.
+		The method allows the invoker generate a file of data source attribute definitions.  This method will be useful when the user wants to determine what
+		valid attributes are available for a given data source.
+		
+	generateDataSourceTypes - Generate Data Source Types for the Composite Server.
+		The method allows the invoker generate a file of data source types for the Composite Server.
+		
+	generateDataSourcesResourceListXML - Generate Data Sources Resource List for a starting path and target server Id will export all of the Data Sources found and their children.
+		This will be useful to know the type and subtype for a particular data source child when constructing the "plan" entries for the 
+		"introspectDataSources" method.
+
+2) Privilege Module - Fixed documentation bug
+3) Regression Module - Enhanced documention
+
+=========================
+Release Date: 2013-05-09
+=========================
+Author: mtinius
+1) Regression Module - fixed bug
+	Fixed a bug where the generated select statement in the input file did not have double quotes around resources
+	containing spaces, special characters or reserved words.  The query would fail without the double quotes.
+		e.g. select count(1) cnt from "_CAT"."1SCH"."customer orders"
+
+2) Resource Module - added methods: 
+	createFolder - Create all folders in the path associated with passed in resource path.
+	createFolders -Create all folders in the path associated with the passed in resource ids.
+	The deployToolModules.xsd (ResourceModule was modified to add an optional element "recursive" to the schema.
+	
+3) DataSource Module - added support for attributes containing ValueArray, ValueList, and ValueMap
+	CIS 6.2 provides Data Ship Join which uses has an attributed named "DBLinkList" which uses a ValueMap.
+	The deployToolModules.xsd DataSourceModule was modified to expand the definition of genericAttributes which are
+	defined by AttributeDefType.  The "value" element was made optional.  The following elements were added to the schema:
+		ValueArray
+		ValueList
+		ValueMap
+
+4) In general, the deployToolModules.xsd has been modified but there is no impact to existing Module XML schemas as the modifications
+   to the schema were made with optional settings.  Existing Module XML files will work with this changed schema.  It is important
+   to have this new schema present in the upgraded PDTool directory.  Follow, the upgrade procedure outlined below.
+
+=========================
+Release Date: 2013-04-18
+=========================
+Author: mtinius
+1) no changes - PDToolStudio only
+
+=========================
+Release Date: 2013-03-01
+=========================
+Author: mtinius
+1) Added ResourceModule.getUsedResources() - used by RebindModule.
+2) RebindModule - modified the rebindFolder() capability to allow any "rebindable" rebindable resource.
+   Rebindable resources include, Views (TABLE), Procedures (Packaged, SQL Script, XSLT).
+   The "rebindFolder" method provide the ability to rebind the resources in an entire folder to another folder.
+   For example, a folder of physical views may point to a physical data source in DEV but the name of the
+   data source is different in TEST and PROD.  The rebindFolder allows the deployer to rebind the entire folder
+   in one deployment operation.  
+3) Regression Scripts - updated the scripts to test all Rebind Module scenarios.
+
+=========================
+Release Date: 2013-02-15
+=========================
+Author: mtinius
+1) Created scripts for Windows and UNIX to perform automated regression testing on PDTool.  
+   Currently they are considered Composite internal and not included in the distribution zip file.
+   
+2) Modified the Regression Module to allow variables to be used in all elements of the RegressionModule.xml
+   except <perfTestThreads>, <perfTestDuration>, <perfTestSleepPrint>, and <perfTestSleepExec> 
+   because they are defined as xs:integer.
+
+=========================
+Release Date: 2013-01-14
+=========================
+Author: mtinius
+1) Modified deployment configuration files to account for different CIS versions so that when testing is done
+   the versions are not mixed for ArchiveModule and VCSModule.
+
+     /resources/config/
+	deploy.properties - 
+		CIS_VERSION=6_2
+		VCS_REPOSITORY_URL=http:////host.composite.com/svn/sandbox/PDTOOL/$CIS_VERSION
+
+     /resources/carfiles/
+	TEST00_5_2.car
+	TEST00_6_0.car
+	TEST00_6_1.car
+	TEST00_6_2.car
+	Regression_Test_5_2.car
+	Regression_Test_6_0.car
+	Regression_Test_6_1.car
+	Regression_Test_6_2.car
+	
+     /resources/modules/
+	VCSModule.xml - CIS_VERSION
+		<VCS_REPOSITORY_URL>http:////host.composite.com/svn/sandbox/PDTOOL/$CIS_VERSION</VCS_REPOSITORY_URL>
+	RegressionModule.xml - Web service queries
+	
+     /resources/modules/test/ - readme.txt
+     /resources/plans/ - UnitTest-Regression.dp, UnitTest-All-Modules.dp
+
+2) Fixed issue where DataSourceModule and ArchiveModule can only access a physical drive and not a virutal windows drive	
+
+     /bin/ExecutePDTool.bat, ExecutePDTool.sh - added PROJECT_HOME_PHYSICAL
+     /resources/modules/
+	ArchiveModule.xml - CIS_VERSION, PROJECT_HOME_PHYSICAL
+	DataSourceModule.xml - PROJECT_HOME_PHYSICAL
+		
+=========================
+Release Date: 2012-10-29
+=========================
+Author: mtinius
+1) Updated VCS code to take into account resource type when doing a check-in.
+   Coincides with (SUP-13075) VCS checkin process attempts to check in the wrong resource when multiple.
+   No PDTool configuration changes are required.
+	
+=========================
+Release Date: 2012-10-08
+=========================
+Author: mtinius
+1) Fixed Regression Module to properly generate the regression input file for the New Composite Web Services.
+   Handles soap11 and soap12 including BARE and WRAPPED input parameters
+   Note: PDTool will throw an exception if it detects the scenario where the Composite Web Service is configured for BARE
+         and the invoked procedure contains multiple input parameters.  The user must configure WRAPPED input when using
+         multiple input parameters.
+	
+Author: grose
+2) Fixed ServerManager to support Acitve Directory.
+
+Author: mkazia
+3) Fixed GroupManager, UserManager and CommonUtils for Active Directory changes.\
+		
+=========================
+Release Date: 2012-09-24
+=========================
+1) General Connection CIS API Factor
+    a) Added retry and sleep capabilities. 
+    b) Added a new Sleep utility.
+    c) Added new deploy.properties attributes as shown below:
+# CIS_PING_SERVER:  Allows the user to control whether the server performs a ping on CIS prior to executing the actual command.
+#                   The default is true if this variable is not set or does not exist.  This will override all settings.
+CIS_PING_SERVER=false
+#
+# CIS_CONNECT_RETRY: Allows the user to set the number of retries to connect to CIS before throwing an error.
+#                    The default is 1 if this variable is not set or does not exist.
+CIS_CONNECT_RETRY=3
+#
+# CIS_CONNECT_RETRY_SLEEP: Number of milliseconds to sleep on connection retry
+CIS_CONNECT_RETRY_SLEEP_MILLIS=5000
+
+=========================
+Release Date: 2012-08-15
+=========================
+1) Ported PDTool to 6.2.  Made changes to:
+   a) /bin/ExecutePDTool.bat and .sh
+   b) /lib/*.jar, added /lib/endorsed
+   c) /resources/ant
+   d) /resources/carfiles
+   e) /resources/modules, added /resources/modules/generated, /resources/modules/lab, /resources/modules/test
+   f) /resouces/plans
+		
+=========================
+Release Date: 2012-08-10
+=========================
+1) RegressionModule:
+   a) Added separate delimiters for logs <logDelimiter> and data files <delimiter>
+      XML Schema is backwards compatible for compareLogs which used <delimiter>. 
+      <delimiter> has been deprecated in favor of <logDelimiter>
+   b) Expanded the list of supported delimiters to be [COMMA\,\PIPE\|\TAB\TILDE\~]
+   c) Put in additional error handling with better messages when compareLogs can't find the correct delimiter.
+   d) Network share paths starting with \\ are converted to / causing invalid network/share paths.
+      General change to CommonUtils.extracVariables.
+      Requires the http URL to have 4 forward slashes: VCS_REPOSITORY_URL=http:////host.composite.com/svn/sandbox
+
+=========================
+Release Date: 2012-07-24
+=========================
+1) ArchiveModule:
+   a) Added both -includeusers and -mergeusers 
+   a) Added to Archive module the capabilities provided by -includeusers and -mergeusers options of pkg_import. 
+      You can now add <import> node into the <users> specifying one of two options -- "overwrite" or "merge" --  corresponding to the above command-line parameters.
+		<users>
+			<export>
+				<domain>domain_name</domain>
+			</export>
+			<import>overwrite</import>
+		</users>
+ 
+2) GroupModule:
+   a) Provide the ability to generate XML for LDAP (Active Directory) groups
+   b) Provide the ability to create or update LDAP (Active Directory) groups.
+      Active Directory groups must exist prior to this operation.
+
+=========================
+Release Date: 2012-07-19
+=========================
+1) VCSModule:
+    a) Added ability to checkout using labels for Perforce only
+    b) Modified VCSModule.xml and added the optional element <vcsLabel>
+    
+2) deploy.properties
+    a) Added VCS_WORKSPACE_NAME environment variable
+    b) Modified VCS_WORKSPACE_DIR
+    c) Modified P4CLIENT and P4_ENV
+    
+3) Batch Executables (/bin)    
+	a) Modified ExecutePDTool.bat (windows only) to address the "file too long" problem for all VCS implementations.
+	b) Use a SUBST variable v: to assist in shortening the path
+				  
+4) Archive Module has implemented the rest of the import/export options.
+    a) The ArchiveModule.xml has added several new elements so compare your XML with the example in the /resources/modules directory.
+
+=========================
+Release Date: 2012-06-08
+=========================
+1) TriggerModule
+    a) Fixed issue with recurringDay check.  Threw error on 1.  now works for values between 1 and 127.
+2) VCSModule:
+    a) Allow no username and password to be set in the deploy.properties, VCSModule.xml or the command line.
+       This allows a user to use the cached credentials in the filesystem when executing a VCS command.
+       An error will still be thrown by the VCS server if the user credentials have not been established.
+       A user must first establish their credential outside of PD Tool prior to executing PD Tool commands for the first time.
+    b) Allow properties to contain $$ within the text which is converted to $.  
+       This is useful for URLS that contain a $ in the URL like http://localhost:port/$/repo/project      
+3) RegressionModule
+    a) Major enhancements including:
+       i)   Enhancement of existing "Functional Test" capabilities
+       ii)  Addition of "Migration Test" capabilities
+               Ability to generate input file with actual queries from a list
+               Summary output of execution to a log file 
+               Output of content for each test to a file 
+               Ability to compare the checksum of two files to determine exact match
+       iii) Addition of "Performance Test" capabilities
+               Summary output of execution to a log file with start time and duration of query
+               
+    b) Modifications to the RegressionModule.xml that will require a migration of any previous RegressionModule.xml files
+       i)   Removed <inputFileName>
+              Consolidated <inputFileName> and <inputFilePath> to simply use <inputFilePath> and will contain the path and file name together.
+       			<inputFilePath>C:\\Temp\\pubtest.inp</inputFilePath>
+       ii)  Additional elements for <newFileParams>
+       		  <newFileParams>
+       		  	...
+       		  	<createWS>yes</createWS>
+       		  	
+				<!-- The soap type specifies whether to generate web services using soap11 (default), soap12 or all.  soap12 is only applicable for CIS 6.1 and higher. -->
+		 new-->	<createSoapType>soap11</createSoapType>
+				<!-- [yes|no|true|false] Use the default query when generating input file. -->
+		 new-->	<useDefaultViewQuery>no</useDefaultViewQuery>
+		 new-->	<useDefaultProcQuery>no</useDefaultProcQuery>
+		 new-->	<useDefaultWSQuery>no</useDefaultWSQuery>
+
+				<publishedViewQry>SELECT count(1) cnt FROM</publishedViewQry>
+				...
+      		  </newFileParams>
+       		  
+       iii) Additional elements for <testRunParams>
+       		  <testRunParams>
+       		    <testType>migration</testType>
+				<!-- Comparison results are written to this log file. -->
+				<logFilePath>C:/tmp/cis51/pubtestrun.log</logFilePath>
+				<logAppend>no</logAppend>
+				<!-- base directory for output files  -->
+				<baseDir>C:/tmp/cis51</baseDir>
+				<!-- Base Directory output file delimiter [COMMA,PIPE,TAB,SPACE,TILDE] -->
+				<delimiter>PIPE</delimiter>
+				<!-- Print output: [verbose,summary,silent] verbose=print summary and results, summary=print query context, silent=nothing is printed to the command line. -->
+				<printOutput>verbose</printOutput>
+				<!-- (Optional) The number of threads to create when doing performance testing. -->
+				<perfTestThreads>10</perfTestThreads>
+				<!-- (Optional) The duration in seconds to execute the performance test for. -->
+				<perfTestDuration>60</perfTestDuration>
+				<!-- (Optional) The number of seconds to sleep in between printing stats when executing the performance test. -->
+				<perfTestSleepPrint>5</perfTestSleepPrint>
+				<!-- (Optional) The number of seconds to sleep in between query executions when executing the performance test. -->
+				<perfTestSleepExec>1</perfTestSleepExec>
+				
+       			...
+       		  </testRunParams>
+       iv)  Added a new optional element <compareFiles>
+            See documentation for details
+            
+       v)   Added a new optional element <compareLogs>
+            See documentation for details
+       
+    c) Modifications to the Input File that will require a migration of any previous input files
+       		[WEB_SERVICE] section only
+       		
+       		old layout:
+	       		[WEB_SERVICE]
+				path=/services/system/admin/resource/resourcePort.ws
+				action=resourceExists
+				<soap-env:Envelope xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/">
+				  <soap-env:Body>
+				    <ns1:resourceExists xmlns:ns1="http://www.compositesw.com/services/system/admin/resource" >
+				      <ns1:path>/services/databases/system/ALL_DOMAINS</ns1:path>
+				      <ns1:type>TABLE</ns1:type>
+				    </ns1:resourceExists>
+				  </soap-env:Body>
+				</soap-env:Envelope>
+
+       		new layout:
+	       		[WEB_SERVICE]
+				database=admin
+				path=/services/system/admin/resource/resourcePort.ws
+				action=resourceExists
+				encrypt=false
+				contentType=text/xml;charset=UTF-8
+				path=/services/system/admin/resource/resourcePort.ws
+				action=resourceExists
+				<soap-env:Envelope xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/">
+				  <soap-env:Body>
+				    <ns1:resourceExists xmlns:ns1="http://www.compositesw.com/services/system/admin/resource" >
+				      <ns1:path>/services/databases/system/ALL_DOMAINS</ns1:path>
+				      <ns1:type>TABLE</ns1:type>
+				    </ns1:resourceExists>
+				  </soap-env:Body>
+				</soap-env:Envelope>
+				
+				For New Composite Web Service:
+				  soap11 - contentType=text/xml;charset=UTF-8
+				  soap12 - contentType=application/soap+xml;charset=UTF-8
+				
+				For Legacy Composite Web Service:
+				  soap11 - contentType=text/xml;charset=UTF-8
+
+=========================
+Release Date: 2012-03-09
+=========================
+1) Fixed VCS issue with missing jar files.  Replaced mail.jar with geronimo-javamail_1.4_mail-1.8.2.jar and added saaj-ri.jar.
+   These were required by the Archive code for import/export.
+2) Fixed issue with label sequencing where it would skip labels not in alpabetic sequence like "group2, group1".
+3) Added JAVA_OPT with min and max memory settings to ExecutePDTool.bat, ExecutePDTool.sh, and ExecutePDToolStudio.bat
+
+=========================
+Release Date: 2012-02-22
+=========================
+1) Fixed issue with p4 submit.  Command set as follows: p4 submit -d "<message> .//<cis-resource-path>"
+2) Enhancement: added VCS_MESSAGE_PREPEND which allows the user to prepend a static message onto the message that gets passed in.
+     Added VCS_MESSAGE_PREPEND deploy.property and studio.property
+     Added <VCS_MESSAGE_PREPEND></VCS_MESSAGE_PREPEND> to VCSModule.xml -- modified CisDeployToolModule.xsd
+     command:  p4 submit -d "<VCS_MESSAGE_PREPEND> <message> .//<cis-resource-path>"
+3) Fixed issue with 01/31 build not being able to login and perform ArchiveModule import or export.
+4) Fixed oversight where $VCONN variable (example) was missing from deploy.property and example property files
+
+To Upgrade an existing install:
+Copy the following from the new distribution to your existing PD Tool installation
+1.  /dist/CisDeployTool.jar
+2.  /docs/*
+3.  /lib/CisDeployToolModules.jar
+4. /resources/schema/*
+5. Edit /resources/config/deploy.properties (and any other deploy properties that you have) and add the following text after VCS_IGNORE_MESSAGES
+#
+#-------------------
+# VCS_MESSAGE_PREPEND - A static message that gets prepended onto all check-in or forced check-in messages
+VCS_MESSAGE_PREPEND=
+#-------------------
+6. Edit /resources/modules/VCSModule.xml and LABVCSModule.xml (and any other VCS Module XML files that you have) 
+   and add the following line after <VCS_IGNORE_MESSAGES></VCS_IGNORE_MESSAGES>
+		<VCS_MESSAGE_PREPEND></VCS_MESSAGE_PREPEND>
+				  
+=========================
+Release Date: 2012-01-31
+=========================
+1) Fixed encryption issue so that <VCS_PASSWORD> in VCSModule.xml gets encrypted.
+
+=========================
+Release Date: 2012-01-26
+=========================
+1) Fixed a Perforce issue where the user does not have permissions to delete the link to the workspace on the server.
+   Removed the -f flag from the command "p4 client -f -d ${VCS_WORKSPACE_NAME}" and provided a way to pass in
+   options from the deploy.properties/studio.properties using P4DEL_LINK_OPTIONS=
+2) Added the ability to set VCS configuration properties using the VCSModule.xml instead of deploy.properties.  
+   This gives the user the ability to associate different VCS settings like branches/tags in subversion on a single line of the plan file
+   instead of environment wide as was done with the deploy.properties file.  Maintained backward compatibility with previous releases.
+
+=========================
+Release Date: 2012-01-10
+=========================
+GA Release
+
+=========================
+Release Date: 2011-10-27
+=========================
+Modified Basic Authenticator to allow for user@domain for LDAP domains
+Verify that VCS_WORKSPACE_DIR and VCS_TEMP_DIR are not the same
+Modified LabPD-Deploy to allow for a Multi-User/Central Dev. Server lab environment.
+Added 3rd party license files
+
+=========================
+Release Date: 2011-09-26
+=========================
+Updated Deploy Plan files for Archive and DataSource
+Added pingServer() to Server Manager.  Gets invoked each time to make sure CIS is connection can be made.  Throws a more readable message if PD Tool cannot connect to the server.
+Modified each module to invoke pingServer() to insure a connection to the server can be made.
+Updated Privilege Module documentation.
+Updated all Ant build files.
+Created a regression test for Command Line (UnitTest-All-Modules.dp) and Ant (build-All-Modules.xml)
+Fixed problem with CisDeployTool exiting on error when exit on error is FALSE.
+Added initial TFS integration
+Updated /resources/plan files to reflect TFS properties and documentation
+
+=========================
+Release Date: 2011-09-06
+=========================
+Fixed bugs in scripts.
+Updated documentation.
+Fixed distribution.
+Enhanced deploy configuration properties
+	
+
+================================
+Section 3:
+To Upgrade an existing install:
+================================
+--------------------------
+1. Rename previous release
+--------------------------
+   1.1) Rename the original PDTool or PDTool[62|70] directory to PDTool[62|70]-YYYY-MM-DD
+        where YYYY-MM-DD represents the actual release of the previous version as found in PDTool-6.2-YYYY-MM-DD.r1.txt.
+
+----------------------
+2. Install new version
+----------------------
+   2.1) Copy the PDTool zip file with the pattern "PDTool-[62|70]-YYYY-MM-DD.r1.zip" to the root folder where you want to unzip.
+   2.1) OPTION 1: Install the new version by unzipping the PDTool zip file using "WinZip" or "7-Zip"
+		If you using Winzip or 7-Zip then select the option to "Extract Here"
+		Another option is to leave the zip file where it is and simply browse to the root folder where you want to create the "PDTool[62|70]" sub-folder.
+
+   2.2) OPTION 2: Install the new version by unzipping the PDTool zip file using "Extract All"
+        If using Windows "Extract All", make sure that you remove the folder name at the end corrensponding with this pattern: \PDTool-[62|70]-YYYY-MM-DD.r1
+
+		The Extract All will unzip into the root of the directory where the zip file lives and create the sub-folder "PDTool[62|70]".
+		Another option is to leave the zip file where it is and simply browse to the root folder where you want to create the "PDTool[62|70]" sub-folder.
+
+----------------------------
+3. Upgrade Module XML Files
+----------------------------
+   3.1) Save the new PDTool[62|70]/resources/modules/*.xml to a sub-folder so these files are not overwritten
+   3.2) Copy PDTool[62|70]-YYYY-MM-DD/resources/modules/*.xml PDTool[62|70]/resources/modules
+   3.3) Edit XML files as needed or as directed by the release notes to take advantage of new functionality
+
+--------------------------------
+4. Upgrade Deployment Plan Files
+--------------------------------
+   4.1) Save the new PDTool[62|70]/resources/plans/*.dp to a sub-folder so these files are not overwritten
+   4.2) Copy PDTool[62|70]-YYYY-MM-DD/resources/plans/*.dp PDTool[62|70]/resources/plans
+   4.3) Edit .dp files as needed or as directed by the release notes to take advantage of new functionality
+
+--------------------------
+5. Upgrade Ant Build Files
+--------------------------
+   5.1) Save the new PDTool[62|70]/resources/ant/*.xml to a sub-folder so these files are not overwritten
+   5.2) Copy PDTool[62|70]-YYYY-MM-DD/resources/ant/*.xml PDTool[62|70]/resources/ant
+   5.3) Edit .xml files as needed or as directed by the release notes to take advantage of new functionality
+
+---------------------------------------
+6. Upgrade Configuration Property Files
+---------------------------------------
+   6.1) Save the new PDTool[62|70]/resources/config/*.* to a sbu-folder so these files are not overwritten
+   6.2) Copy PDTool[62|70]-YYYY-MM-DD/config/*.properties PDTool[62|70]/config
+   6.3) Copy PDTool[62|70]-YYYY-MM-DD/config/*.xml PDTool[62|70]/config
+   6.4) Edit .properties files as needed or as directed by the release notes to take advantage of new functionality
+
+--------------------
+7. Upgrade bin Files
+--------------------
+   7.1) Copy any customized batch/shell script files from PDTool[62|70]-YYYY-MM-DD/bin to PDTool[62|70]/bin
+   7.2) Review any differences between the old and new setVars.bat.
+        7.2.1) If no differences, simply copy PDTool[62|70]-YYYY-MM-DD/bin/setVars.bat or .sh to PDTool[62|70]/bin
+        7.2.2) If there are differences, then copy your modifications to the same environment variables in the new setVars.bat or .sh
+               Open both the old and new setVars.bat and copy the environment variable settings as needed.

@@ -36,6 +36,51 @@ Release Notes (newest first):
 ==================================
 
 =========================
+Release Date: 2017-06-11
+=========================
+1) DeploymentManager
+	a) For all XML file, the actual registered trademark symbol was replaced with the text representation (R) as it caused problems with initSpring().
+
+2) Common Code (mtinius)
+	a) CommonUtils.maskCommand - Added specific tests for the VCS base type as there are code-specific checks per VCS type.
+	b) ScriptExecutor.executeCommand - When there is an error and the stderr is empty/null then return stdout if it is not null.
+		For GIT, the messages are returned on stdout for some return codes greater than 0.
+	c) Moved VCSWSDAOImpl.resolveExecCommandLineError to CommonUtils.resolveExecCommandLineError 
+		i) Added the ability for it to parse VCS_IGNORE_MESSAGES containing a wildcard "*".  Given the VCS_IGNORE_MESSAGES entry
+			"fatal: pathspec * did not match any files", it will resolve any message containing the text before and after the * but not
+			the variable text represented by the asterick.
+
+3) VCS Module (mtinius) [Fixed GIT]
+	a) VCSWSDAOImpl.execCommandLineVCS - When there is an error and the stderr is empty/null then return stdout if it is not null.
+	b) VCSManagerImpl.vcsInitWorkspaceCommon - For GIT only:
+		i) Create the workspace and VCS project root folder.
+		ii) Set the working directory to the VCS project root folder.
+		iii) Modified checkout command to use "." for the target folder instead of the VCS project root since the working directory is now VCS project root.
+				arguments=" checkout " + vcsStruct.getVcsOptions() + " " + remoteBranch + " ."
+		iv) Added an escape (% and $) of username and password after the URL encoder as a single % or $ is treated like a variable.  A double %% or $$ is escaped.
+		v)  Added " config --system core.longpaths true" in order to handle long path names in windows.
+	c) VCSManagerImpl.vcsInitializeBaseFolderCheckin
+		i) Added a call to initialize the workspace as this would not have been done the first time when calling this method.
+		ii) Added " config --system core.longpaths true" in order to handle long path names in windows. 
+	d) Added messages to VCS_IGNORE_MESSAGES for /resources/config/deploy_GIT_[DEV1|UAT1|PROD1].properties files and /resources/modules/VCSModule.xml
+		i)  "nothing to commit"
+		ii) "fatal: pathspec * did not match any files"
+	e) Modified AbstractLifecycleListener.handleErrors to only throw errors if the error is not present in VCS_IGNORE_MESSAGES
+		by invoking CommonUtils.resolveExecCommandLineError.
+	f) For GIT only, forced vcsCheckin to follow the vcsForcedCheckin code path due to circumstances where a similar concept of check in to SVN could not be ascertained.
+		vcsCheckin: The check-in path performs the following steps:				vcsForcedCheckin: The vcs forced check-in performs the following steps:
+			1) Export from CIS into temp dir										1) Check out from GIT
+			2) Diffmerger to do a GIT add/delete									2) Validate paths
+			3) Check out [this was wiping out the add/delete]						3) Export from CIS into temp dir
+			4) Validate paths														4) Diffmerger to do a GIT add/delete
+			5) Check in to GIT [commit and push]									5) Check in to GIT [commit and push]
+		The main difference is that vcsForcedCheckin performs the check out from GIT first to synchronize the workspace and then performs
+			the diff merger to add/delete resources with GIT followed by a check in to GIT.
+		Given the use case for PDTool, this was an acceptable resolution to this issue as PDTool is used for deployment and not typically for check in.
+			If it is used for check in, then synchronizing the workspace first before check in is acceptable.
+			
+		
+=========================
 Release Date: 2017-12-22
 =========================
 1) Transitioned all modules and documentation to TIBCO(R) Software Github open source.
