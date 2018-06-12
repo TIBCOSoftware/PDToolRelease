@@ -36,7 +36,7 @@ Release Notes (newest first):
 ==================================
 
 =========================
-Release Date: 2018-06-11
+Release Date: 2018-06-12
 =========================
 1) DeploymentManager
 	a) For all XML file, the actual registered trademark symbol was replaced with the text representation (R) as it caused problems with initSpring().
