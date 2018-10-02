@@ -36,6 +36,66 @@ Release Notes (newest first):
 ==================================
 
 =========================
+Release Date: 2018-10-01
+=========================
+1) Resource Cache Module (mtinius)
+	a) Modified "generateResourceCacheXML" to add additional parameters to the output.
+	b) Modified "updateResourceCache" to allow an update using the additional parameters.
+	c) Regenerated the 7.0 WSDL based on 7.0.5 to allow for new resource cache parameters in the API.
+	d) PDToolModules.xsd - added new resource cache entries to support multi-table and other features. 
+		New structures are indicated below with "NEW" and are all optional so as to retain backwards compatibility.
+		<ns2:ResourceCacheModule xmlns:ns2="http://www.tibco.com/ps/deploytool/modules">
+		    <resourceCache>
+		        <id></id>
+		        <resourcePath></resourcePath>
+		        <resourceType></resourceType>
+		        <cacheConfig>
+		            <allOrNothing></allOrNothing> 		<--NEW
+		            <configured></configured>
+		            <enabled></enabled>
+		            <incremental></incremental>			<--NEW
+		            <storage>
+		                <mode></mode>
+		                <bucketMode></bucketMode>		<--NEW
+		                <bucketProperties>				<----
+		                    <bucketCatalog></bucketCatalog> |
+		                    <bucketSchema></bucketSchema>   |
+		                    <bucketPrefix></bucketPrefix>   |-NEW
+		                    <numBuckets></numBuckets>	    |
+		                </bucketProperties>				<----
+		                <dropCreateIdx></dropCreateIdx>	<--NEW
+		                <storageDataSourcePath></storageDataSourcePath>
+		                <storageTargets>
+		                    <targetName></targetName>
+		                    <path></path>
+		                    <type></type>
+		                </storageTargets>
+		                <storageTargets>
+		                    <targetName></targetName>
+		                    <path></path>
+		                    <type></type>
+		                </storageTargets>
+		                <storageTargets>
+		                    <targetName></targetName>
+		                    <path></path>
+		                    <type></type>
+		                </storageTargets>
+		            </storage>
+		            <refresh>
+		                <mode></mode>
+		            </refresh>
+		            <expirationPeriod>
+		                <period></period>
+		                <count></count>
+		            </expirationPeriod>
+		            <firstRefreshCallback></firstRefreshCallback>	<--NEW
+		            <secondRefreshCallback></secondRefreshCallback>	<--NEW
+		            <clearRule></clearRule>
+		        </cacheConfig>
+		    </resourceCache>
+		</ns2:ResourceCacheModule>
+
+=========================
 Release Date: 2017-06-12
 =========================
 1) DeploymentManager

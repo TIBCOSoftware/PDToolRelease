@@ -36,6 +36,11 @@ Release Notes (newest first):
 ==================================
 
 =========================
+Release Date: 2018-10-01
+=========================
+1) No changes for PDToolStudio.
+
+=========================
 Release Date: 2018-06-12
 =========================
 1) DeploymentManager
