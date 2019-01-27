@@ -42,6 +42,10 @@ Steps to perform a release
 	a. All code should be complete and files saved
 	b. Right-click on build_release7.0.0.xml and select "Run As" --> "Ant Build"
 	
-5. Build the regression release 
+5. Build the 8.0 release 
+	a. All code should be complete and files saved
+	b. Right-click on build_release8.0.0.xml and select "Run As" --> "Ant Build"
+	
+6. Build the regression release 
 	a. All code should be complete and files saved
 	b. Right-click on build_regression.xml and select "Run As" --> "Ant Build"

@@ -15,7 +15,7 @@
 # agreement with TIBCO.
 
 ==================================
-PDTool 6.2/7.0 Release notes:
+PDTool 7.0/8.0 Release notes:
 ==================================
 Section 1: Minimum Recommend DV Versions
 Section 2: Release notes (newest first)
@@ -25,7 +25,8 @@ Section 3: To Upgrade an existing install
 Section 1:
 Minimum Recommended CIS Versions:
 ==================================
-CIS 7.0:  Hotfix  7.0.0.00.11 or higher
+DV 8.0:  Hotfix  8.0.0.00.00 or higher
+DV 7.0:  Hotfix  7.0.0.00.11 or higher
 CIS 6.2:  Hotfix  6.2.0.00.22 or higher for basic http access [non-https]
 CIS 6.2:  Hotfix  6.2.4.00.46 or higher for https access [PDTool over SSL]
 CIS 6.2:  Hotfix  6.2.5.00.24 or higher for pkg_import -nosourceinfo to work properly [Archive Module]
@@ -34,6 +35,32 @@ CIS 6.2:  Hotfix  6.2.5.00.24 or higher for pkg_import -nosourceinfo to work pro
 Section 2:
 Release Notes (newest first):
 ==================================
+
+=========================
+Release Date: 2019-01-30
+=========================
+TDV 8.0 integration - modified various modules to work with 8.0
+1) Batch Files (mtinius)
+	When executing PDTool with 8.0, ExecutePDTool.[bat|sh] must use option -ver 8.0.0 or VCS will fail.
+	Optionally, cisVersion.[bat|sh] could be set to 8.0.0 so that ExecutePDTool batch does not have to use -ver.
+	Updated the documentation and help sections with the -ver.  The implementation was there but it was not well documented.
+2) VCS Module (mtinius)
+	a) Modified ExportCommand.java to add the export setting "encryptionPassword" to satisfy the new 8.0 API setting.  
+	   The -ver 8.0.0 informs the code to apply this setting whereas 7.0 does not.
+	b) Modified VCSManagerImpl.java/cis_import_export__export() to only invoke the export command when the resource exists otherwise it throws an exception.
+3) PDToolModules.xsd Schema change (mtinius)
+	a) Modified AccessRightsValidationList to add DM [deployment manager] studio access right
+	   Affected GroupPrivilegeList schema element.  Resolved validation issue in Group Module.
+	   Affected UserPrivilegeList schema element.  Resolved validation issue in User Module.
+	b) Added missing ArchiveModule command options.
+4) Archive Module (mtinius)
+	a) Modified export and backup up export to set the -encryptionPassword to a default for 8.0 only if it is not explicitly set.
+	b) Added missing command line options.
+5) Resource Cache Module (mtinius)
+	a) Fixed an issue with refresh interval for getResourceCacheConfig to correctly analyze SECOND and MINUTE.
+5) Datasource Module (mtinius)
+	a) Added the ability to use variables in attribute password fields.
+6) Discontinued support for PDToolStudio for 8.0 since Studio contains native VCS integration and no longer supports the hooks that PDTool needs.
 
 =========================
 Release Date: 2018-10-01
