@@ -23,18 +23,25 @@ Section 3: To Upgrade an existing install
 
 ==================================
 Section 1:
-Minimum Recommended CIS Versions:
+Minimum Recommended TDV Versions:
 ==================================
 DV 8.0:  Hotfix  8.0.0.00.00 or higher
-DV 7.0:  Hotfix  7.0.0.00.11 or higher
-CIS 6.2:  Hotfix  6.2.0.00.22 or higher for basic http access [non-https]
-CIS 6.2:  Hotfix  6.2.4.00.46 or higher for https access [PDTool over SSL]
-CIS 6.2:  Hotfix  6.2.5.00.24 or higher for pkg_import -nosourceinfo to work properly [Archive Module]
+DV 7.0:  Hotfix  7.0.8.00.00 or higher
 
 ==================================
 Section 2:
 Release Notes (newest first):
 ==================================
+
+=========================
+Release Date: 2020-08-27
+=========================
+1) Fixed VCS GIT Checkout
+2) Only releasing PDTool 8.0 going forward.  No longer supporting PDTool 7.0
+3) Removed all references to PDTool Studio which is no longer supported.
+4) Cleaned up the PDTool project and removed outdated artifacts
+5) Cleaned up documentation and exported to PDF with Bookmarks and clickable table-of-contents.
+6) Removed support for CVS as it has never been used.
 
 =========================
 Release Date: 2019-01-30
