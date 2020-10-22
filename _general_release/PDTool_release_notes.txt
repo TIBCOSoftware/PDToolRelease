@@ -34,6 +34,37 @@ Release Notes (newest first):
 ==================================
 
 =========================
+Release Date: 2020-10-20
+=========================
+1) Fixed PDTool to work with TDV 8.3 - new lib jar files
+	a) PDTool 8.3 requires JDK 11 for the JAVA_HOME setting.
+2) Fixed Archive moddule XML schema /rebindableResources/rebindablePaths/description - was misspelled as descripiton
+3) Fixed Archive module code for attribute includesourceinfo - when true it is not put on the command line because
+	it is no longer a valid pkg_import/pkg_export option.  The default is to include source info. It is replaced with nosourceinfo.
+4) Updated documentation to create PDF bookmarks.
+5) Updated Archive module documentation to include missing XML attributes.
+6) Modified runtime packaging lib directory:  /lib/common; /lib/pdtool; /lib/tdv; /lib/tdv/endorsed
+7) Modified the ExecutePDTool.bat and .sh scripts
+8) Modified ant build scripts.  **** NOTE **** The end user must modify their ant build scripts.
+	FROM:
+  <path id="project.class.path">
+	<fileset dir="${PROJECT_HOME}/lib"><include name="**/*.jar"/></fileset>
+	<fileset dir="${PROJECT_HOME}/lib/endorsed"><include name="**/*.jar"/></fileset>
+	<fileset dir="${PROJECT_HOME}/dist"><include name="**/*.jar"/></fileset>
+	<fileset dir="${PROJECT_HOME}/ext/ant/lib"><include name="**/*.jar"/></fileset>
+  </path>
+
+	TO:
+  <path id="project.class.path">
+	<fileset dir="${PROJECT_HOME}/lib/common"><include name="*.jar"/></fileset>
+	<fileset dir="${PROJECT_HOME}/lib/pdtool"><include name="*.jar"/></fileset>
+	<fileset dir="${PROJECT_HOME}/lib/tdv"><include name="*.jar"/></fileset>
+	<fileset dir="${PROJECT_HOME}/lib/tdv/endorsed"><include name="*.jar"/></fileset>
+	<fileset dir="${PROJECT_HOME}/dist"><include name="*.jar"/></fileset>
+	<fileset dir="${PROJECT_HOME}/ext/ant/lib"><include name="**/*.jar"/></fileset>
+  </path>
+
+=========================
 Release Date: 2020-08-27
 =========================
 1) Fixed VCS GIT Checkout
